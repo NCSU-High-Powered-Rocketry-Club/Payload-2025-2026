@@ -5,66 +5,88 @@ def readMoisture(client):
     result = client.read_holding_registers(address=0x12, count=1, device_id=1)
     
     if result.isError():
-        print("Error Reading: ", result)
+        moistureLevelOutput = "error"
     else:
         result = result.registers.index(0)
     
         moistureLevel = result * 0.1
-        print("Moisture: ", moistureLevel, "%")
+        moistureLevelOutput = f"Moisture: {moistureLevel}%"
+    return moistureLevelOutput
         
         
 def readTemperature(client):
     result = client.read_holding_registers(address=0x13, count=1, device_id=1)
     
     if result.isError():
-        print("Error Reading: ", result)
+        tempOutput = "error"
     else:
         result = result.registers.index(0)
         
         temperatureC = result * 0.1
         temperatureF = temperatureC * (9/5) + 32
         
-        print("Temperature: ", temperatureF, "\u00b0F/", temperatureC, "\u00b0C")
+        tempOutput = f"Temperature: {temperatureF}\u00b0F/{temperatureC}\u00b0C"
+        
+    return tempOutput
         
 
 def readEC(client):
     result = client.read_holding_registers(address=0x15, count=1, device_id=1)
     
     if result.isError():
-        print("Error Reading: ", result)
+        ecOutput = "error"
     else:
         result = result.registers.index(0)
         
-        print("EC: ", result, " us/cm")
+        ecOutput = f"EC: {result} us/cm"
+        
+    return ecOutput
         
 def readpH(client):
     result = client.read_holding_registers(address=0x06, count=1, device_id=1)
 
     if result.isError():
-        print("Error Reading: ", result)
+        pHOutput = "error"
     else:
         result = result.registers.index(0)
         
         pH = result * 0.01
         
-        print("pH: ", pH)
+        pHOutput = f"pH: {pH}"
+    return pHOutput    
         
 def readNPK(client):
     result = client.read_holding_registers(address=0x1E, count=3, device_id=1)
     
     if result.isError():
-        print("Error Reading: ", result)
+        nitrogenOutput = "error"
+        phosphorusOutput = "error"
+        potassiumOutput = "error"
+        
     else:
         nitrogenContent = result.registers.index(0)
         phosphorusContent = result.registers.index(1)
         potassiumContent = result.registers.index(2)
         
-        print("Nitrogen:   ", nitrogenContent, "mg/kg")
-        print("Phosphorus: ", phosphorusContent, "mg/kg")
-        print("Potassium:  ", potassiumContent, "mg/kg")
+        nitrogenOutput = f"Nitrogen: {nitrogenContent} mg/kg"
+        phosphorusOutput = f"Phosphorus: {phosphorusContent} mg/kg"
+        potassiumOutput = f"Potassium: {potassiumContent} mg/kg"
         
+    npkOutput = [nitrogenOutput, phosphorusOutput, potassiumOutput]
+    
+    return npkOutput
         
-
+def printData(data):
+    print("\n".join(data))
+    
+def clearScreen():
+    for _ in range(7):
+        # Move cursor up one line
+        print("\033[F", end='')   # Equivalent to cursor up
+        # Clear the line
+        print("\033[K", end='')   # Equivalent to clear line
+        # Move cursor back down
+        print("\r", end='')
 
 
 
@@ -87,13 +109,17 @@ if client.connect():
     print("Connected to Modbus RTU device.")
 
     for i in range(120):
-        readTemperature(client)
-        readMoisture(client)
-        readEC(client)
-        readpH(client)
-        readNPK(client)
+        temp = readTemperature(client)
+        moisture = readMoisture(client)
+        ec = readEC(client)
+        pH = readpH(client)
+        npk = readNPK(client)
         
+        data = [temp, moisture, ec, pH, npk]
+        
+        printData(data)
         time.sleep(1)
+        clearScreen()
         
 else:
     print("Failed to connect.")
