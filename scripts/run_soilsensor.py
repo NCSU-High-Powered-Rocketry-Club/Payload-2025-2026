@@ -7,7 +7,7 @@ def readMoisture(client):
     if result.isError():
         moistureLevelOutput = "error"
     else:
-        result = result.registers.index(0)
+        result = result.registers[0]
     
         moistureLevel = result * 0.1
         moistureLevelOutput = f"Moisture: {moistureLevel}%"
@@ -20,7 +20,7 @@ def readTemperature(client):
     if result.isError():
         tempOutput = "error"
     else:
-        result = result.registers.index(0)
+        result = result.registers[0]
         
         temperatureC = result * 0.1
         temperatureF = temperatureC * (9/5) + 32
@@ -36,7 +36,7 @@ def readEC(client):
     if result.isError():
         ecOutput = "error"
     else:
-        result = result.registers.index(0)
+        result = result.registers[0]
         
         ecOutput = f"EC: {result} us/cm"
         
@@ -48,7 +48,7 @@ def readpH(client):
     if result.isError():
         pHOutput = "error"
     else:
-        result = result.registers.index(0)
+        result = result.registers[0]
         
         pH = result * 0.01
         
@@ -64,9 +64,9 @@ def readNPK(client):
         potassiumOutput = "error"
         
     else:
-        nitrogenContent = result.registers.index(0)
-        phosphorusContent = result.registers.index(1)
-        potassiumContent = result.registers.index(2)
+        nitrogenContent = result.registers[0]
+        phosphorusContent = result.registers[1]
+        potassiumContent = result.registers[2]
         
         nitrogenOutput = f"Nitrogen: {nitrogenContent} mg/kg"
         phosphorusOutput = f"Phosphorus: {phosphorusContent} mg/kg"
@@ -80,7 +80,7 @@ def printData(data):
     print("\n".join(data))
     
 def clearScreen():
-    for _ in range(7):
+    for _ in range(10):
         # Move cursor up one line
         print("\033[F", end='')   # Equivalent to cursor up
         # Clear the line
@@ -108,18 +108,38 @@ client = ModbusSerialClient(
 if client.connect():
     print("Connected to Modbus RTU device.")
 
-    for i in range(120):
+    for i in range(480):
         temp = readTemperature(client)
         moisture = readMoisture(client)
         ec = readEC(client)
         pH = readpH(client)
         npk = readNPK(client)
+        titleLine = "Soil Data"
+        dashLine = "-------------------------"
         
-        data = [temp, moisture, ec, pH, npk]
+        data = [titleLine, dashLine, temp, moisture, ec, pH] + npk + [dashLine]
+        
+        clearScreen()
         
         printData(data)
-        time.sleep(1)
-        clearScreen()
+        time.sleep(0.25)
+        
+        
         
 else:
     print("Failed to connect.")
+    
+    for i in range(1200):
+        temp = f"Num {1 + i}"
+        moisture = f"Crazy {2 - (i / 2)}"
+        ec = f"Hot {10 * i}"
+        pH = f"Easy {4 - i}"
+        npk = f"Spaghetti {5 - (2 * i)}"
+        titleLine = "Soil Data"
+        dashLine = "-------------------------"
+        
+        data = [titleLine, dashLine, temp, moisture, ec, pH, npk, dashLine]
+        
+        printData(data)
+        time.sleep(0.1)
+        clearScreen()
