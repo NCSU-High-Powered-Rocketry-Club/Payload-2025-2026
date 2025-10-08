@@ -1,5 +1,24 @@
 from pymodbus.client import ModbusSerialClient
 
+def readMoisture(client):
+    result = client.read_holding_registers(address=0x12, count=1, device_id=1)
+    
+    result = result[0]
+    
+    moistureLevel =
+    
+    
+    if result.isError():
+        print("Error Reading: ", result)
+    else:
+        print("Moisture: ")
+
+
+
+
+
+
+
 # Create the Modbus RTU client
 client = ModbusSerialClient(
     port='COM5',        # Replace with your actual port
