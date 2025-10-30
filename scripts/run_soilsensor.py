@@ -1,22 +1,116 @@
 from pymodbus.client import ModbusSerialClient
+import time
 
 def readMoisture(client):
     result = client.read_holding_registers(address=0x12, count=1, device_id=1)
     
-    result = result[0]
+    if result.isError():
+        moistureLevelOutput = "error"
+    else:
+        result = result.registers[0]
     
-    moistureLevel =
-    
+        moistureLevel = result * 0.1
+        moistureLevelOutput = f"Moisture: {moistureLevel}%"
+    return moistureLevelOutput
+        
+        
+def readTemperature(client):
+    result = client.read_holding_registers(address=0x13, count=1, device_id=1)
     
     if result.isError():
-        print("Error Reading: ", result)
+        tempOutput = "error"
     else:
-        print("Moisture: ")
+        result = result.registers[0]
+        
+        temperatureC = result * 0.1
+        temperatureF = temperatureC * (9/5) + 32
+        
+        tempOutput = f"Temperature: {temperatureF}\u00b0F/{temperatureC}\u00b0C"
+        
+    return tempOutput
+        
+
+def readEC(client):
+    result1 = client.read_holding_registers(address=0x14, count=1, device_id=1)
+    result2 = client.read_holding_registers(address=0x15, count=1, device_id=1)
+    
+    if result1.isError():
+        ecOutput = "error"
+    else:
+        result1 = result1.registers[0] * 256
+        result2 = result2.registers[0]
+        
+        
+        ecOutput = f"EC: {result1 + result2} us/cm"
+        
+    return ecOutput
+
+def readECTest(client):
+    
+    result = client.read_holding_registers(address=0x15, count=1, device_id=1)
+    
+    if result.isError():
+        ecOutput = "error"
+    else:
+        #high_word = result.registers[0]  # register at 0x14
+        #low_word = result.registers[1]   # register at 0x15
+
+        #combined = (high_word << 16) | low_word  # shift high word 16 bits left, OR with low word
+
+        ecOutput = f"EC: {result.registers[0]} us/cm"
+        
+    return ecOutput
+        
+def readpH(client):
+    result = client.read_holding_registers(address=0x06, count=1, device_id=1)
+
+    if result.isError():
+        pHOutput = "error"
+    else:
+        result = result.registers[0]
+        
+        pH = result * 0.01
+        
+        pHOutput = f"pH: {pH}"
+    return pHOutput    
+        
+def readNPK(client):
+    result = client.read_holding_registers(address=0x1E, count=3, device_id=1)
+    
+    if result.isError():
+        nitrogenOutput = "error"
+        phosphorusOutput = "error"
+        potassiumOutput = "error"
+        
+    else:
+        nitrogenContent = result.registers[0]
+        phosphorusContent = result.registers[1]
+        potassiumContent = result.registers[2]
+        
+        nitrogenOutput = f"Nitrogen: {nitrogenContent} mg/kg"
+        phosphorusOutput = f"Phosphorus: {phosphorusContent} mg/kg"
+        potassiumOutput = f"Potassium: {potassiumContent} mg/kg"
+        
+    npkOutput = [nitrogenOutput, phosphorusOutput, potassiumOutput]
+    
+    return npkOutput
+        
+def printData(data):
+    print("\n".join(data))
+    
+def clearScreen():
+    for _ in range(10):
+        # Move cursor up one line
+        print("\033[F", end='')   # Equivalent to cursor up
+        # Clear the line
+        print("\033[K", end='')   # Equivalent to clear line
+        # Move cursor back down
+        print("\r", end='')
 
 
 
-
-
+# Determine correct port ID
+#comPort = input("Enter COM Port: ")
 
 
 # Create the Modbus RTU client
@@ -33,35 +127,40 @@ client = ModbusSerialClient(
 if client.connect():
     print("Connected to Modbus RTU device.")
 
-    # Read 2 holding registers starting at 0x12 (18 decimal)
-    result = client.read_holding_registers(address=0x12, count=2, device_id=1)
-
-    if result.isError():
-        print("Error reading:", result)
-    else:
-        print("Moisture + Temp Register values:", result.registers)
+    for i in range(480):
+        temp = readTemperature(client)
+        moisture = readMoisture(client)
+        ec = readECTest(client)
+        pH = readpH(client)
+        npk = readNPK(client)
+        titleLine = "Soil Data"
+        dashLine = "-------------------------"
         
-    result = client.read_holding_registers(address=0x06, count=1, device_id=1)
-
-    if result.isError():
-        print("Error reading:", result)
-    else:
-        print("pH Register values:", result.registers)
-
-    result = client.read_holding_registers(address=0x15, count=1, device_id=1)
-
-    if result.isError():
-        print("Error reading:", result)
-    else:
-        print("EC Register values:", result.registers)
+        data = [titleLine, dashLine, temp, moisture, ec, pH] + npk + [dashLine]
+        #data = [titleLine, dashLine, ec, dashLine]
+        clearScreen()
         
-    result = client.read_holding_registers(address=0x1E, count=3, device_id=1)
-
-    if result.isError():
-        print("Error reading:", result)
-    else:
-        print("NPK Register values:", result.registers)
+        printData(data)
+        time.sleep(0.25)
         
-    client.close()
+        
+        
 else:
     print("Failed to connect.")
+    
+    for i in range(1200):
+        temp = f"Num {1 + i}"
+        moisture = f"Crazy {2 - (i / 2)}"
+        ec = f"Hot {10 * i}"
+        pH = f"Easy {4 - i}"
+        npk = f"Spaghetti {5 - (2 * i)}"
+        titleLine = "Soil Data"
+        dashLine = "-------------------------"
+        
+        data = [titleLine, dashLine, temp, moisture, ec, pH, npk, dashLine]
+        
+        printData(data)
+        time.sleep(0.1)
+        clearScreen()
+        
+       
