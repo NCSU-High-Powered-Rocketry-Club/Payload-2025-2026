@@ -31,14 +31,33 @@ def readTemperature(client):
         
 
 def readEC(client):
+    result1 = client.read_holding_registers(address=0x14, count=1, device_id=1)
+    result2 = client.read_holding_registers(address=0x15, count=1, device_id=1)
+    
+    if result1.isError():
+        ecOutput = "error"
+    else:
+        result1 = result1.registers[0] * 256
+        result2 = result2.registers[0]
+        
+        
+        ecOutput = f"EC: {result1 + result2} us/cm"
+        
+    return ecOutput
+
+def readECTest(client):
+    
     result = client.read_holding_registers(address=0x15, count=1, device_id=1)
     
     if result.isError():
         ecOutput = "error"
     else:
-        result = result.registers[0]
-        
-        ecOutput = f"EC: {result} us/cm"
+        #high_word = result.registers[0]  # register at 0x14
+        #low_word = result.registers[1]   # register at 0x15
+
+        #combined = (high_word << 16) | low_word  # shift high word 16 bits left, OR with low word
+
+        ecOutput = f"EC: {result.registers[0]} us/cm"
         
     return ecOutput
         
@@ -91,12 +110,12 @@ def clearScreen():
 
 
 # Determine correct port ID
-comPort = input("Enter COM Port: ")
+#comPort = input("Enter COM Port: ")
 
 
 # Create the Modbus RTU client
 client = ModbusSerialClient(
-    port=comPort,        # Replace with your actual port
+    port='COM5',        # Replace with your actual port
     baudrate=9600,
     parity='N',
     stopbits=1,
@@ -111,14 +130,14 @@ if client.connect():
     for i in range(480):
         temp = readTemperature(client)
         moisture = readMoisture(client)
-        ec = readEC(client)
+        ec = readECTest(client)
         pH = readpH(client)
         npk = readNPK(client)
         titleLine = "Soil Data"
         dashLine = "-------------------------"
         
         data = [titleLine, dashLine, temp, moisture, ec, pH] + npk + [dashLine]
-        
+        #data = [titleLine, dashLine, ec, dashLine]
         clearScreen()
         
         printData(data)
@@ -143,3 +162,5 @@ else:
         printData(data)
         time.sleep(0.1)
         clearScreen()
+        
+       
