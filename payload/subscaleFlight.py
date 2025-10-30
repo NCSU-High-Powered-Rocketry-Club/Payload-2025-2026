@@ -5,7 +5,7 @@ import csv
 import math
 
 # Set constants
-P0 = 101325
+P0 = 101325 # Sea level atmospheric pressure
 
 # Initialize FIRM
 firm = FIRM(port="/dev/ttyACM0", baudrate=115200)
