@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from firm import FIRM
 import csv
 import math
