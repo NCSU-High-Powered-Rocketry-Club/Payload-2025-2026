@@ -3,6 +3,7 @@
 from firm import FIRM
 import csv
 import math
+import time
 
 # Set constants
 P0 = 101325 # Sea level atmospheric pressure
@@ -32,3 +33,5 @@ while True:
     # Log to CSV file WITH timestamps
     
     writer.writerow([data.timestamp_seconds, altitude, data.accel_x_meters_per_s2, data.accel_y_meters_per_s2, data.accel_z_meters_per_s2])
+    
+    time.sleep(0.02)
