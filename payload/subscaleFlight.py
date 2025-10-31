@@ -25,9 +25,9 @@ while True:
     temperature = data.temperature_celsius
     
     pressureRatio = P0 / pressure
-    eq1 = math.pow(pressureRatio,(1 / 5.257)) - 1
+    eq1 = math.pow(pressureRatio,(1 / 5.257))
     eq2 = temperature + 273.15
-    altitude = (eq1 * eq2) / 0.0065
+    altitude = 44330*(1-eq1)
     
     # Log to CSV file WITH timestamps
     
