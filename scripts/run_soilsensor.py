@@ -1,4 +1,6 @@
 from pymodbus.client import ModbusSerialClient
+from datetime import datetime
+import pandas as pd
 import time
 import csv
 
@@ -108,58 +110,89 @@ def clearScreen():
         print("\033[K", end='')   # Equivalent to clear line
         # Move cursor back down
         print("\r", end='')
+ 
+ 
+with open("Soil_Data_Test_Log.txt", mode="w") as soil_test_log_file:
     
-# Create the Modbus RTU client
-client = ModbusSerialClient(
-    port='\dev\serial0',        # Virtual Serial Port that corresponds with UART Pins
-    baudrate=9600,
-    parity='N',
-    stopbits=1,
-    bytesize=8,
-    timeout=1
-)
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    soil_test_log_file.write(f"{timestamp}: Program Start\n")
+      
+    # Create the Modbus RTU client
+    client = ModbusSerialClient(
+        port='\dev\serial0',        # Virtual Serial Port that corresponds with UART Pins
+        baudrate=9600,
+        parity='N',
+        stopbits=1,
+        bytesize=8,
+        timeout=1
+    )
 
-# Connect to the slave device
-if client.connect():
-    print("Connected to Modbus RTU device.")
-    
-    # Open CSV for soil data "Soil_Data.csv"
+    # Connect to the slave device
+    if client.connect():
+        
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        soil_test_log_file.write(f"{timestamp}: Connected to soil sensor\n\n")
+        
+        print("Connected to Modbus RTU device.")
+        
+        # Open CSV for soil data "Soil_Data.csv"
 
-    with open("Soil_Data.csv", mode="w", newline="") as file:
-        writer = csv.writer(file)
-        writer.writerow(["Temperature (F)", 
-                        "Moisture (%)", 
-                        "EC (us/cm)", 
-                        "pH", 
-                        "Nitrogen (mg/kg)",
-                        "Phosphorus (mg/kg)",
-                        "Potassium (mg/kg)"
-                        ])
-
-        for i in range(480):
-            temp_str, temp = readTemperature(client)
-            moisture_str, moisture = readMoisture(client)
-            ec_str, ec = readECTest(client)
-            pH_str, pH = readpH(client)
-            npk_str, npk = readNPK(client)
-            titleLine_str = "Soil Data"
-            dashLine_str = "-------------------------"
-            
-            # Log data to CSV
-            writer.writerow([temp, moisture, ec, pH, npk[0], npk[1], npk[2]]);
-            
-            # Print data to command line
-            data = [titleLine_str, dashLine_str, temp_str, moisture_str, ec_str, pH_str] + npk_str + [dashLine_str]
-            #data = [titleLine, dashLine, ec, dashLine]
-            clearScreen()
-            
-            printData(data)
-            time.sleep(0.1)
-    
-    # Average Data and Log
+        with open("Soil_Data.csv", mode="w", newline="") as soil_data_file:
+            soil_writer = csv.writer(soil_data_file)
+            soil_writer.writerow(["Temperature (F)", 
+                            "Moisture (%)", 
+                            "EC (us/cm)", 
+                            "pH", 
+                            "Nitrogen (mg/kg)",
+                            "Phosphorus (mg/kg)",
+                            "Potassium (mg/kg)"
+                            ])
+            try:
+                for i in range(600):
+                    temp_str, temp = readTemperature(client)
+                    moisture_str, moisture = readMoisture(client)
+                    ec_str, ec = readECTest(client)
+                    pH_str, pH = readpH(client)
+                    npk_str, npk = readNPK(client)
+                    titleLine_str = "Soil Data"
+                    dashLine_str = "-------------------------"
+                    
+                    # Log data to CSV
+                    soil_writer.writerow([temp, moisture, ec, pH, npk[0], npk[1], npk[2]]);
+                    
+                    # Print data to command line
+                    data = [titleLine_str, dashLine_str, temp_str, moisture_str, ec_str, pH_str] + npk_str + [dashLine_str]
+                    #data = [titleLine, dashLine, ec, dashLine]
+                    clearScreen()
+                    
+                    printData(data)
+                    time.sleep(0.1)
+                    
+            except KeyboardInterrupt:
+                print("\nTest Stopped")
+        
+        # Average Data and Log
+        soilData = pd.read_csv("Soil_Data.csv")
+        averageSoilData = soilData.mean(numeric_only=True)
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        soil_test_log_file.write(f"{timestamp}: Data collection complete\n")
+        soil_test_log_file.write(f"Temperature (F):    {averageSoilData['Temperature (F)']}\n")
+        soil_test_log_file.write(f"Moisture (%):       {averageSoilData['Moisture (%)']}\n")
+        soil_test_log_file.write(f"EC (us/cm):         {averageSoilData['EC (us/cm)']}\n")
+        soil_test_log_file.write(f"pH:                 {averageSoilData['pH']}\n")
+        soil_test_log_file.write(f"Nitrogen (mg/kg):   {averageSoilData['Nitrogen (mg/kg)']}\n")
+        soil_test_log_file.write(f"Phosphorus (mg/kg): {averageSoilData['Phosphorus (mg/kg)']}\n")
+        soil_test_log_file.write(f"Potassium (mg/kg):  {averageSoilData['Potassium (mg/kg)']}\n")
         
         
+            
+            
+    else:
         
-else:
-    print("Failed to connect.")
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        soil_test_log_file.write(f"\n{timestamp}: Failed to connect\n")
+        print("Failed to connect.")
+        
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    soil_test_log_file.write(f"{timestamp}: \nProgram Closed\n")
         
