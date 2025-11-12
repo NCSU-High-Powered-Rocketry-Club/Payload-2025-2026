@@ -1,6 +1,5 @@
 from pymodbus.client import ModbusSerialClient
 import time
-import csv
 
 def readMoisture(client):
     result = client.read_holding_registers(address=0x12, count=1, device_id=1)
@@ -12,7 +11,7 @@ def readMoisture(client):
     
         moistureLevel = result * 0.1
         moistureLevelOutput = f"Moisture: {moistureLevel}%"
-    return moistureLevelOutput, moistureLevel
+    return moistureLevelOutput
         
         
 def readTemperature(client):
@@ -28,7 +27,7 @@ def readTemperature(client):
         
         tempOutput = f"Temperature: {temperatureF}\u00b0F/{temperatureC}\u00b0C"
         
-    return tempOutput, temperatureF
+    return tempOutput
         
 
 def readEC(client):
@@ -57,10 +56,10 @@ def readECTest(client):
         #low_word = result.registers[1]   # register at 0x15
 
         #combined = (high_word << 16) | low_word  # shift high word 16 bits left, OR with low word
-        ec = result.registers[0]
+
         ecOutput = f"EC: {result.registers[0]} us/cm"
         
-    return ecOutput, ec
+    return ecOutput
         
 def readpH(client):
     result = client.read_holding_registers(address=0x06, count=1, device_id=1)
@@ -73,7 +72,7 @@ def readpH(client):
         pH = result * 0.01
         
         pHOutput = f"pH: {pH}"
-    return pHOutput, pH    
+    return pHOutput    
         
 def readNPK(client):
     result = client.read_holding_registers(address=0x1E, count=3, device_id=1)
@@ -93,9 +92,8 @@ def readNPK(client):
         potassiumOutput = f"Potassium: {potassiumContent} mg/kg"
         
     npkOutput = [nitrogenOutput, phosphorusOutput, potassiumOutput]
-    npk = [nitrogenContent, phosphorusContent, potassiumContent]
     
-    return npkOutput, npk
+    return npkOutput
         
 def printData(data):
     print("\n".join(data))
@@ -108,10 +106,16 @@ def clearScreen():
         print("\033[K", end='')   # Equivalent to clear line
         # Move cursor back down
         print("\r", end='')
-    
+
+
+
+# Determine correct port ID
+#comPort = input("Enter COM Port: ")
+
+
 # Create the Modbus RTU client
 client = ModbusSerialClient(
-    port='\dev\serial0',        # Virtual Serial Port that corresponds with UART Pins
+    port='COM5',        # Replace with your actual port
     baudrate=9600,
     parity='N',
     stopbits=1,
@@ -122,44 +126,41 @@ client = ModbusSerialClient(
 # Connect to the slave device
 if client.connect():
     print("Connected to Modbus RTU device.")
-    
-    # Open CSV for soil data "Soil_Data.csv"
 
-    with open("Soil_Data.csv", mode="w", newline="") as file:
-        writer = csv.writer(file)
-        writer.writerow(["Temperature (F)", 
-                        "Moisture (%)", 
-                        "EC (us/cm)", 
-                        "pH", 
-                        "Nitrogen (mg/kg)",
-                        "Phosphorus (mg/kg)",
-                        "Potassium (mg/kg)"
-                        ])
-
-        for i in range(480):
-            temp_str, temp = readTemperature(client)
-            moisture_str, moisture = readMoisture(client)
-            ec_str, ec = readECTest(client)
-            pH_str, pH = readpH(client)
-            npk_str, npk = readNPK(client)
-            titleLine_str = "Soil Data"
-            dashLine_str = "-------------------------"
-            
-            # Log data to CSV
-            writer.writerow([temp, moisture, ec, pH, npk[0], npk[1], npk[2]]);
-            
-            # Print data to command line
-            data = [titleLine_str, dashLine_str, temp_str, moisture_str, ec_str, pH_str] + npk_str + [dashLine_str]
-            #data = [titleLine, dashLine, ec, dashLine]
-            clearScreen()
-            
-            printData(data)
-            time.sleep(0.1)
-    
-    # Average Data and Log
+    for i in range(480):
+        temp = readTemperature(client)
+        moisture = readMoisture(client)
+        ec = readECTest(client)
+        pH = readpH(client)
+        npk = readNPK(client)
+        titleLine = "Soil Data"
+        dashLine = "-------------------------"
+        
+        data = [titleLine, dashLine, temp, moisture, ec, pH] + npk + [dashLine]
+        #data = [titleLine, dashLine, ec, dashLine]
+        clearScreen()
+        
+        printData(data)
+        time.sleep(0.25)
         
         
         
 else:
     print("Failed to connect.")
+    
+    for i in range(1200):
+        temp = f"Num {1 + i}"
+        moisture = f"Crazy {2 - (i / 2)}"
+        ec = f"Hot {10 * i}"
+        pH = f"Easy {4 - i}"
+        npk = f"Spaghetti {5 - (2 * i)}"
+        titleLine = "Soil Data"
+        dashLine = "-------------------------"
         
+        data = [titleLine, dashLine, temp, moisture, ec, pH, npk, dashLine]
+        
+        printData(data)
+        time.sleep(0.1)
+        clearScreen()
+        
+       
