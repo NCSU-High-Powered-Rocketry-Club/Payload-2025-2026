@@ -32,3 +32,5 @@ while True:
     # Log to CSV file WITH timestamps
     
     writer.writerow([data.timestamp_seconds, altitude, data.accel_x_meters_per_s2, data.accel_y_meters_per_s2, data.accel_z_meters_per_s2])
+
+    
