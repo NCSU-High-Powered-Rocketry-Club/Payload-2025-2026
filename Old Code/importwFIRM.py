@@ -20,11 +20,11 @@ def get_state(row):
     acceleration = (row["accel_x"]**2 + row["accel_y"]**2 + row["accel_z"]**2)**0.5
     if "Prelaunch" == state and acceleration > 1.5:
         return "Launch"
-    elif "Launch" == state and acceleration < 0:
+    elif "Launch" == state and acceleration < 1:
         return "Coast"
     elif "Coast" == state and row["timestamp"] > 1000:
         return "Descent"
-    elif "Descent" == state and acceleration > 0:
+    elif "Descent" == state and acceleration > 0.9 and acceleration < 1.1:
         return "Landing"
 
 output_file = 'Output.csv'
