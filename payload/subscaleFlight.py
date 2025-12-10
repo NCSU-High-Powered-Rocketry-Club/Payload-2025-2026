@@ -3,6 +3,7 @@
 from firm import FIRM
 import csv
 import math
+import time
 
 # Set constants
 P0 = 101325 # Sea level atmospheric pressure
