@@ -5,7 +5,7 @@ description = "IMU data logging and state detection for rocket payload"
 readme = "README.md"
 requires-python = ">=3.10"
 
-dependencies = [    "pandas", "firm-hprc"]
+dependencies = ["pandas", "firm-client"]
 
 # UV:
 [tool.uv]
