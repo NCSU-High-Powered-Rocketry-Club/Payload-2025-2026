@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 
 # Initialize FIRM
-firm = FIRMClient("/dev/ttyACM0")
+firm = FIRMClient("/dev/ttyAMA1")
 firm.get_data_packets()
 firm.zero_out_pressure_altitude()
 firm.start()
