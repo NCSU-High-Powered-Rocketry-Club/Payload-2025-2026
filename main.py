@@ -5,7 +5,7 @@ import math
 import time
 
 # Initialize FIRM
-firm = FIRM(port="/dev/ttyACM0")
+firm = FIRM(port="/dev/ttyAMA1")
 firm.initialize()
 
 # Open CSV file
