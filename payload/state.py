@@ -2,49 +2,31 @@
 Module for the finite state machine that represents which state of flight the rocket is in.
 """
 
+import time
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from airbrakes.constants import (
-    GROUND_ALTITUDE_METERS,
-    LANDED_ACCELERATION_METERS_PER_SECOND_SQUARED,
-    MAX_ALTITUDE_THRESHOLD,
-    MAX_FREE_FALL_SECONDS,
-    MAX_VELOCITY_THRESHOLD,
-    TAKEOFF_VELOCITY_METERS_PER_SECOND,
-    TARGET_APOGEE_METERS,
+from payload.constants import (
+    GRAVE_DEPLOY_LENGTH_SECONDS,
+    LAUNCH_ALTITUDE_METERS,
+    LAUNCH_STATE_LENGTH_SECONDS,
 )
-from airbrakes.utils import convert_ns_to_s
 
 if TYPE_CHECKING:
-    from airbrakes.context import Context
+    from payload.context import Context
 
 
 class State(ABC):
     """
-    Abstract Base class for the states of the air brakes system. Each state will have an update
-    method that will be called every loop iteration and a next_state method that will be called when
-    the state is over.
+    The abstract base class for a state. Every state must implement these methods.
 
-    For Airbrakes, we will have 5 states:
-    1. Standby - when the rocket is on the rail on the ground
-    2. Motor Burn - when the motor is burning and the rocket is accelerating
-    3. Coast - after the motor has burned out and the rocket is coasting, this is when air brakes
-        deployment will be controlled by the bang-bang controller.
-    4. Free Fall - when the rocket is falling back to the ground after apogee, this is when the air
-        brakes will be retracted.
-    5. Landed - when the rocket lands on the ground. After a few seconds in landed state, the
-        Airbrakes program will end.
+    After LandedState, Grave and Zombie diverge in which states they go into.
     """
 
     __slots__ = ("context", "start_time_ns")
 
     def __init__(self, context: Context) -> None:
-        """:param context: The Airbrakes Context managing the state machine."""
         self.context = context
-        # At the very beginning of each state, we retract the air brakes
-        self.context.retract_airbrakes()
-        self.start_time_ns = context.data_processor.current_timestamp
 
     @property
     def name(self) -> str:
@@ -56,16 +38,17 @@ class State(ABC):
         """
         Called every loop iteration.
 
-        Uses the Airbrakes Context to interact with the hardware and decides when to move to the
+        Uses the Payload Context to interact with the hardware and decides when to move to the
         next state.
         """
 
     @abstractmethod
     def next_state(self) -> None:
         """
-        We never expect/want to go back a state e.g. We're never going to go from Flight to Motor
+        We never expect/want to go back a state e.g. We're never going to go from Coast to Motor
         Burn, so this method just goes to the next state.
         """
+
 
 class StandbyState(State):
     """
@@ -76,72 +59,101 @@ class StandbyState(State):
 
     def update(self) -> None:
         """
-        Checks if the rocket has launched, based on our velocity.
+        Checks if the rocket has launched, based on our altitude.
         """
-        data = self.context.data_processor
-        # If the velocity of the rocket is above a threshold, the rocket has launched.
-        # if rocket is past 1000 ft --> next state
-
-        self.context.data_processor.zero_out_altitude()
+        # If we go above 200 meters, we have launched. This is a very delayed, but very safe check.
+        if (
+            self.context.most_recent_firm_data_packet
+            and self.context.most_recent_firm_data_packet.est_position_z_meters
+            > LAUNCH_ALTITUDE_METERS
+        ):
+            self.next_state()
 
     def next_state(self):
         self.context.state = Launched(self.context)
 
+
 class Launched(State):
     """
-    When the rocket has launched and the motor is burning.
+    When the rocket has launched and it is in the air.
     """
 
-    __slots__ = ()
+    __slots__ = ("_start_time",)
+
+    def __init__(self, context: Context) -> None:
+        super().__init__(context)
+        self._start_time = time.monotonic()
 
     def update(self) -> None:
         """
-        5 min timer
+        Check if enough time has elapsed since launch to say we've landed.
         """
-        pass
-
+        elapsed = time.monotonic() - self._start_time
+        if elapsed >= LAUNCH_STATE_LENGTH_SECONDS:
+            self.next_state()
 
     def next_state(self) -> None:
-        # After 5 min passed
-        pass
+        self.context.state = LandedState(self.context)
+
 
 class LandedState(State):
     """
-    When the rocket has landed.
+    When the rocket has landed. This is where the state machines
+    for Grave and Zombie will diverge.
     """
 
-    __slots__ = ()
+    __slots__ = ("_start_time",)
+
+    def __init__(self, context: Context) -> None:
+        super().__init__(context)
+        # If this is zombie, we're just going to set a timer to move on to the next state
+        if self.context.zombie:
+            self._start_time = time.monotonic()
 
     def update(self) -> None:
         """
-        Check if the rocket has been landed for a few seconds.
+        Handles deciding what state to go into based on if this is Grave or Zombie.
         """
-        pass
-        
+        # If this is Grave, immediately go to deploying Zombie
+        if self.context.grave:
+            self.next_state()
+        # If this is Zombie, wait 10 seconds to be deployed
+        elif self.context.zombie:
+            elapsed = time.monotonic() - self._start_time
+            if elapsed >= GRAVE_DEPLOY_LENGTH_SECONDS:
+                self.next_state()
 
     def next_state(self) -> None:
-        # If ISZOMBIE next state ---> deploy zombie
-        # Else if next state ---> being deployed
-        pass
-    
+        if self.context.grave:
+            self.context.state = DeployZombieState(self.context)
+        elif self.context.zombie:
+            self.context.state = ZombieDeployedState(self.context)
+
+
 class DeployZombieState(State):
     """
     When the rocket has deployed the zombie chute.
     """
 
-    __slots__ = ()
+    __slots__ = ("_deploy_started",)
+
+    def __init__(self, context: Context) -> None:
+        super().__init__(context)
+        self._deploy_started = False
 
     def update(self) -> None:
         """
-        grave.deploy_zombie()
+        Deploys Zombie from the rocket.
         """
-        pass
-
+        if not self._deploy_started:
+            self.context.deploy_zombie()
+            self._deploy_started = True
 
     def next_state(self) -> None:
-        # End for grave
+        # Grave has no next state, so we explicitly do nothing
         pass
-    
+
+
 class ZombieDeployedState(State):
     """
     When the rocket has deployed the zombie.
@@ -151,17 +163,18 @@ class ZombieDeployedState(State):
 
     def update(self) -> None:
         """
-        Check if zombie deployment is complete.
-        if it is complete next state
+        Orients zombie to be standing up properly.
         """
+        # TODO: call some method in context that moves the legs and stands zombie up
+        # TODO: write code to detect if zombie is oriented correctly and legs are deployed, then go
+        #  to next state
         pass
-
 
     def next_state(self) -> None:
-        # zombie stood up
-        pass
+        self.context.state = ZombieStandingState(self.context)
 
-class LegDeploymentState(State):
+
+class ZombieStandingState(State):
     """
     When the rocket has stood the zombie chute up.
     """
@@ -170,33 +183,27 @@ class LegDeploymentState(State):
 
     def update(self) -> None:
         """
-        zombie.deploy_legs()
-        check orientation
-        if not stood up --> try again\
-        if stood up --> next state
+        Drills to collect the soil sample.
         """
+        # TODO: call some method in context to do the drilling
+        # TODO: write code to detect if the soil has been collected
         pass
-
 
     def next_state(self) -> None:
-        # zombie stood up
         pass
 
-class ZombieStoodState(State):
+
+class ZombieSampleCollectedState(State):
     """
-    When the rocket has stood the zombie chute up.
+    Once a soil sample has been collected and needs to be analyzed.
     """
 
     __slots__ = ()
 
     def update(self) -> None:
-        """
-        zombie.start_drilling()
-        zombie.start_soil_sensor()
-        """
+        # TODO: have this call a method in context to analyze the soil
         pass
 
-
     def next_state(self) -> None:
-        # End program
+        # Zombie has no next state, so we explicitly do nothing.
         pass

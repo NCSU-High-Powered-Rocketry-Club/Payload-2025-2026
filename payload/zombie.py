@@ -1,13 +1,11 @@
 class Zombie:
     """A class representing a zombie payload."""
 
-    __slots__ = ("")
-
-
+    __slots__ = ""
 
     def __init__(self):
         pass
-    
+
     def deploy_legs(self) -> None:
         pass
 
@@ -16,19 +14,19 @@ class Zombie:
         Starts the drilling mechanism of the zombie.
         """
         pass
-    
+
     def stop_drilling(self) -> None:
         """
         Stops the drilling mechanism of the zombie.
         """
         pass
-    
+
     def start_soil_sensor(self) -> None:
         """
         Starts the soil sensor of the zombie.
         """
         pass
-    
+
     def check_deployment(self) -> bool:
         """
         Checks if the zombie deployment is complete.
@@ -36,7 +34,7 @@ class Zombie:
         :return: True if deployment is complete, False otherwise.
         """
         pass
-        
+
     def check_orientation(self) -> bool:
         """
         Checks if the zombie is upright.
@@ -44,4 +42,3 @@ class Zombie:
         :return: True if the zombie is upright, False otherwise.
         """
         pass
-    

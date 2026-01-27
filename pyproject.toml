@@ -4,7 +4,7 @@ requires-python = ">=3.14, <3.15"
 version = "0.1"
 readme = "README.md"
 dependencies = [
-    "firm-client"
+    "firm-client>=1.0.0"
 ]
 
 [dependency-groups]

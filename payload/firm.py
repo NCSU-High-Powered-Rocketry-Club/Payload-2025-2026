@@ -1,7 +1,9 @@
-from firm_client import FIRMClient, FIRMData
+from firm_client import FIRMClient, FIRMDataPacket
+
+from payload.constants import PORT, BAUD_RATE, SERIAL_TIMEOUT_SECONDS
+
 
 class FIRM:
-
     __slots__ = ("firm_client",)
 
     def __init__(self):
@@ -19,7 +21,7 @@ class FIRM:
         """
         self.firm_client.stop()
 
-    def get_data_packets(self) -> list[FIRMData]:
+    def get_data_packets(self) -> list[FIRMDataPacket]:
         """
         Returns all available FIRM data packets from the queued FIRM packets.
 
