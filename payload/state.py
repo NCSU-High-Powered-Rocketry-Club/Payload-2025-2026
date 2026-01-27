@@ -170,10 +170,10 @@ class ZombieDeployedState(State):
         #  to next state
 
     def next_state(self) -> None:
-        self.context.state = ZombieStandingState(self.context)
+        self.context.state = ZombieDrillingState(self.context)
 
 
-class ZombieStandingState(State):
+class ZombieDrillingState(State):
     """
     When the rocket has stood the zombie chute up.
     """

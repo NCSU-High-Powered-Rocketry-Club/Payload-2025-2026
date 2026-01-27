@@ -1,11 +1,15 @@
 [project]
-name = "Payload-2025-2026"
+name = "payload-2025-2026"
 requires-python = ">=3.14, <3.15"
-version = "0.1"
+version = "0.1.0"
 readme = "README.md"
 dependencies = [
-    "firm-client>=1.0.0"
+    "firm-client>=1.0.0",
 ]
+
+[project.scripts]
+grave = "payload.main:run_grave"
+zombie = "payload.main:run_zombie"
 
 [dependency-groups]
 dev = [
@@ -20,6 +24,14 @@ dev = [
 [tool.uv]
 python-preference = "only-managed"
 
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# HATCH:
+[tool.hatch.build.targets.wheel]
+packages = ["payload"]
+
 # RUFF:
 [tool.ruff]
 line-length = 100
@@ -28,14 +40,16 @@ show-fixes = true
 exclude = ["scripts"]
 
 [tool.ruff.lint]
-# Some of the ones prefixed with a d should probably not be ignored, but that can be fixed later.
-ignore = ["PLR2004", "PLR0911", "PLR0912", "PLR0913", "PLR0915", "PERF203", "ISC001", "S311",
-    "D102", "D103", "D104", "D107", "D205", "D401", "D200"]
-select = ["E", "F", "I", "PL", "UP", "RUF", "PTH", "C4", "B", "PIE", "SIM", "RET", "RSE",
+ignore = [
+    "PLR2004", "PLR0911", "PLR0912", "PLR0913", "PLR0915", "PERF203", "ISC001", "S311",
+    "D102", "D103", "D104", "D107", "D205", "D401", "D200",
+]
+select = [
+    "E", "F", "I", "PL", "UP", "RUF", "PTH", "C4", "B", "PIE", "SIM", "RET", "RSE",
     "G", "ISC", "PT", "ASYNC", "TCH", "SLOT", "PERF", "PYI", "FLY", "AIR", "Q", "INP",
     "W", "YTT", "DTZ", "ARG", "T20", "FURB", "D100", "D101", "D300", "D418",
-    "D419", "S", "NPY", "D", "D213"]
-
+    "D419", "S", "NPY", "D", "D213",
+]
 
 [tool.ruff.lint.pydocstyle]
 convention = "pep257"
