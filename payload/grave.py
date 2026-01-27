@@ -1,3 +1,6 @@
+"""This is Grave, the part of payload that ejects Zombie."""
+
+
 class Grave:
     """A mock class representing a graveyard for testing purposes."""
 
@@ -7,10 +10,8 @@ class Grave:
         """
         Initializes the Grave instance.
         """
-        pass
 
     def deploy_zombie(self) -> None:
         """
         The deployment of a zombie payload.
         """
-        pass

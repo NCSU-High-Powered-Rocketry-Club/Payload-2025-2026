@@ -1,9 +1,15 @@
+"""The code for the FIRM device."""
+
 from firm_client import FIRMClient, FIRMDataPacket
 
-from payload.constants import PORT, BAUD_RATE, SERIAL_TIMEOUT_SECONDS
+from payload.constants import BAUD_RATE, PORT, SERIAL_TIMEOUT_SECONDS
 
 
 class FIRM:
+    """
+    This is the FIRM device class. It just uses firm-client, adding start and stop methods.
+    """
+
     __slots__ = ("firm_client",)
 
     def __init__(self):

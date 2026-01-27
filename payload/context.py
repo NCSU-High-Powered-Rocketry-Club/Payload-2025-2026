@@ -1,9 +1,15 @@
-from firm_client import FIRMDataPacket
+"""The context for the payload state machine."""
 
-from payload.firm import FIRM
-from payload.grave import Grave
+from typing import TYPE_CHECKING
+
 from payload.state import StandbyState
-from payload.zombie import Zombie
+
+if TYPE_CHECKING:
+    from firm_client import FIRMDataPacket
+
+    from payload.firm import FIRM
+    from payload.grave import Grave
+    from payload.zombie import Zombie
 
 
 class Context:

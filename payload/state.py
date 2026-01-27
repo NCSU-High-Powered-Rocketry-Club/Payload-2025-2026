@@ -168,7 +168,6 @@ class ZombieDeployedState(State):
         # TODO: call some method in context that moves the legs and stands zombie up
         # TODO: write code to detect if zombie is oriented correctly and legs are deployed, then go
         #  to next state
-        pass
 
     def next_state(self) -> None:
         self.context.state = ZombieStandingState(self.context)
@@ -187,7 +186,6 @@ class ZombieStandingState(State):
         """
         # TODO: call some method in context to do the drilling
         # TODO: write code to detect if the soil has been collected
-        pass
 
     def next_state(self) -> None:
         pass
