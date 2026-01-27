@@ -2,14 +2,15 @@
 
 from typing import TYPE_CHECKING
 
+from payload.data_handling.logger import Logger
 from payload.state import StandbyState
 
 if TYPE_CHECKING:
     from firm_client import FIRMDataPacket
 
-    from payload.firm import FIRM
-    from payload.grave import Grave
-    from payload.zombie import Zombie
+    from payload.hardware.firm import FIRM
+    from payload.hardware.grave import Grave
+    from payload.hardware.zombie import Zombie
 
 
 class Context:
@@ -25,12 +26,19 @@ class Context:
     https://www.tutorialspoint.com/design_pattern/state_pattern.htm
     """
 
-    # TODO add slots
+    __slots__ = (
+        "grave",
+        "zombie",
+        "firm",
+        "logger",
+    )
 
-    def __init__(self, grave: Grave | None, zombie: Zombie | None, firm: FIRM):
+    def __init__(
+        self, grave: Grave | None, zombie: Zombie | None, firm: FIRM, logger: Logger
+    ) -> None:
         self.grave = grave
         self.zombie = zombie
-
+        self.logger = Logger
         # This either has to be for Grave or for Zombie
         if (grave is None and zombie is None) or (grave is not None and zombie is not None):
             raise ValueError("This can either be a grave, or a zombie. Not both or neither.")
@@ -42,9 +50,11 @@ class Context:
 
     def start(self):
         self.firm.start()
+        self.logger.start()
 
     def stop(self):
         self.firm.stop()
+        self.logger.stop()
 
     def update(self):
         self.firm_data_packets = self.firm.get_data_packets()
@@ -56,6 +66,14 @@ class Context:
         self.most_recent_firm_data_packet = self.firm_data_packets[-1]
 
         self.state.update()
+
+        self.logger.log(
+            self.context_data_packet,
+            self.servo_data_packet,
+            self.firm_data_packets,
+            self.grave_data_packets,
+            self.zombie_data_packet,
+        )
 
         # TODO: do logging here (probably make a logger.py file to encapsulate that code)
 

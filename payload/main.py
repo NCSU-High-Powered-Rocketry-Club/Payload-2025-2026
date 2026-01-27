@@ -5,9 +5,9 @@ It will create the Context object and run the main loop.
 """
 
 from payload.context import Context
-from payload.firm import FIRM
-from payload.grave import Grave
-from payload.zombie import Zombie
+from payload.hardware.grave import Grave
+from payload.hardware.firm import FIRM
+from payload.hardware.zombie import Zombie
 
 
 # TODO: eventually add more stuff here like the logger
