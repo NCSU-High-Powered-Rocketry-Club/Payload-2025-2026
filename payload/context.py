@@ -27,10 +27,16 @@ class Context:
     """
 
     __slots__ = (
-        "grave",
-        "zombie",
+        "context_data_packet",
         "firm",
+        "firm_data_packets",
+        "grave",
+        "grave_data_packet",
         "logger",
+        "most_recent_firm_data_packet",
+        "state",
+        "zombie",
+        "zombie_data_packet",
     )
 
     def __init__(
@@ -38,11 +44,11 @@ class Context:
     ) -> None:
         self.grave = grave
         self.zombie = zombie
-        self.logger = Logger
         # This either has to be for Grave or for Zombie
         if (grave is None and zombie is None) or (grave is not None and zombie is not None):
             raise ValueError("This can either be a grave, or a zombie. Not both or neither.")
 
+        self.logger = logger
         self.firm = firm
         self.state = StandbyState(self)
         self.firm_data_packets: list[FIRMDataPacket] = []
@@ -67,11 +73,13 @@ class Context:
 
         self.state.update()
 
+        # TODO: need to add method for making context data packet, also maybe change the fields
+        #  in the context data packet
+
         self.logger.log(
             self.context_data_packet,
-            self.servo_data_packet,
             self.firm_data_packets,
-            self.grave_data_packets,
+            self.grave_data_packet,
             self.zombie_data_packet,
         )
 

@@ -10,14 +10,14 @@ import typing
 from collections import deque
 from typing import Any, Literal
 
+import msgspec
+
 from payload.constants import (
-    IDLE_LOG_CAPACITY,
     LOG_BUFFER_SIZE,
     NUMBER_OF_LINES_TO_LOG_BEFORE_FLUSHING,
     STOP_SIGNAL,
 )
 from payload.data_handling.packets.logger_data_packet import LoggerDataPacket
-from payload.state import LandedState, StandbyState
 from payload.utils import get_all_packets_from_queue
 
 if typing.TYPE_CHECKING:
@@ -26,7 +26,6 @@ if typing.TYPE_CHECKING:
     from payload.data_handling.packets.context_data_packet import ContextDataPacket
     from payload.data_handling.packets.firm_data_packet import FIRMDataPacket
     from payload.data_handling.packets.grave_data_packet import GraveDataPacket
-    from payload.data_handling.packets.servo_data_packet import ServoDataPacket
     from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket
 
 DecodedLoggerDataPacket = list[int | float | str]
@@ -120,7 +119,6 @@ class Logger:
     @staticmethod
     def _prepare_logger_packets(
         context_data_packet: ContextDataPacket,
-        servo_data_packet: ServoDataPacket,
         firm_data_packets: list[FIRMDataPacket],
         grave_data_packet: GraveDataPacket,
         zombie_data_packet: ZombieDataPacket,
@@ -129,7 +127,6 @@ class Logger:
         Creates a data packet representing a row of data to be logged.
 
         :param context_data_packet: The Context Data Packet to log.
-        :param servo_data_packet: The Servo Data Packet to log.
         :param firm_data_packets: The FIRM data packets to log.
         length as the number of EstimatedDataPackets present in the `imu_data_packets`.
         :return: A deque of LoggerDataPacket objects.
@@ -142,8 +139,6 @@ class Logger:
         for firm_data_packet in firm_data_packets:
             logger_packet = LoggerDataPacket(
                 state_letter=context_data_packet.state.__name__[0],
-                set_extension=str(servo_data_packet.set_extension.value),
-                encoder_position=servo_data_packet.encoder_position,
                 timestamp=firm_data_packet.timestamp,
                 invalid_fields=firm_data_packet.invalid_fields,
                 retrieved_imu_packets=context_data_packet.retrieved_imu_packets,
@@ -235,7 +230,6 @@ class Logger:
     def log(
         self,
         context_data_packet: ContextDataPacket,
-        servo_data_packet: ServoDataPacket,
         firm_data_packets: list[FIRMDataPacket],
         grave_data_packet: GraveDataPacket,
         zombie_data_packet: ZombieDataPacket,
@@ -244,7 +238,6 @@ class Logger:
         Logs the current state, extension, and IMU data to the CSV file.
 
         :param context_data_packet: The Context Data Packet to log.
-        :param servo_data_packet: The Servo Data Packet to log.
         :param firm_data_packets: The IMU data packets to log.
         :param grave_data_packet: The processor data packets to log.
         :param zombie_data_packet: The most recent apogee predictor data packet to log.
@@ -252,35 +245,19 @@ class Logger:
         # We are populating a list with the fields of the logger data packet
         logger_data_packets: list[LoggerDataPacket] = Logger._prepare_logger_packets(
             context_data_packet,
-            servo_data_packet,
             firm_data_packets,
             grave_data_packet,
             zombie_data_packet,
         )
 
-        # If we are in Standby or Landed State, we need to buffer the data packets:
-        if context_data_packet.state in (StandbyState, LandedState):
-            # Determine how many packets to log and buffer
-            log_capacity = max(0, IDLE_LOG_CAPACITY - self._log_counter)
-            to_log = logger_data_packets[:log_capacity]
-            to_buffer = logger_data_packets[log_capacity:]
+        # If we are not in Standby or Landed State, we should log the buffer if it's not empty:
+        if self._log_buffer:
+            self._log_the_buffer()
 
-            # Update counter and handle logging/buffering
-            self._log_counter += len(to_log)
-            if to_log:
-                for packet in to_log:
-                    self._log_queue.put(packet, block=False)
-            if to_buffer:
-                self._log_buffer.extend(to_buffer)
-        else:
-            # If we are not in Standby or Landed State, we should log the buffer if it's not empty:
-            if self._log_buffer:
-                self._log_the_buffer()
-
-            # Reset the counter for other states
-            self._log_counter = 0
-            for packet in logger_data_packets:
-                self._log_queue.put(packet, block=False)
+        # Reset the counter for other states
+        self._log_counter = 0
+        for packet in logger_data_packets:
+            self._log_queue.put(packet, block=False)
 
     def _log_the_buffer(self):
         """

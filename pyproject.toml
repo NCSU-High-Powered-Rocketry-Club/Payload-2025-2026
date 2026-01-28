@@ -5,6 +5,7 @@ version = "0.1.0"
 readme = "README.md"
 dependencies = [
     "firm-client>=1.0.0",
+    "msgspec>=0.20.0",
 ]
 
 [project.scripts]

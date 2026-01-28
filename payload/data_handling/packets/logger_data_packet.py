@@ -14,10 +14,6 @@ class LoggerDataPacket(array_like=True, kw_only=True):
     # Fields derived from ContextDataPacket
     state_letter: str | None
 
-    # Fields in ServoDataPacket
-    set_extension: str | None
-    encoder_position: int | None
-
     # IMU Data Packet Fields
     timestamp: int
     invalid_fields: str | None
