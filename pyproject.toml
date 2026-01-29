@@ -5,7 +5,9 @@ version = "0.1.0"
 readme = "README.md"
 dependencies = [
     "firm-client>=1.0.0",
+    "gpiozero>=2.0.1",
     "msgspec>=0.20.0",
+    "pigpio>=1.78",
 ]
 
 [project.scripts]

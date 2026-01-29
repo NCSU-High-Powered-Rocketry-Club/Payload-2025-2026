@@ -1,42 +1,43 @@
-import RPi.GPIO as GPIO
 import time
+
+from gpiozero import Device, Servo
+from gpiozero.pins.pigpio import PiGPIOFactory
 
 # --------------------
 # GPIO SETUP
 # --------------------
 SERVO_PIN = 18     # GPIO pin connected to servo signal
-PWM_FREQ = 50      # Standard servo frequency
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(SERVO_PIN, GPIO.OUT)
+# GPIOZero docs recommend using the pigpio daemon to improve
+# PWM precision.
+Device.pin_factory = PiGPIOFactory()
 
-pwm = GPIO.PWM(SERVO_PIN, PWM_FREQ)
-pwm.start(7.5)     # Center position
+servo = Servo(SERVO_PIN, initial_value=0)
 
 print("Servo initialized at center")
 
 try:
     while True:
         print("Move to LEFT")
-        pwm.ChangeDutyCycle(5.5)
+        servo.min()
         time.sleep(2)
 
         print("Center")
-        pwm.ChangeDutyCycle(7.5)
+        servo.mid()
         time.sleep(2)
 
         print("Move to RIGHT")
-        pwm.ChangeDutyCycle(9.5)
+        servo.max()
         time.sleep(2)
 
         print("Center")
-        pwm.ChangeDutyCycle(7.5)
+        servo.mid()
         time.sleep(2)
 
 except KeyboardInterrupt:
     print("Exiting...")
 
 finally:
-    pwm.stop()
-    GPIO.cleanup()
+    servo.detach()
     print("GPIO cleaned up")
+    
