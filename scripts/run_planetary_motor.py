@@ -1,60 +1,72 @@
-import RPi.GPIO as GPIO
 import time
+
+from gpiozero import Device, Servo
+from gpiozero.pins.pigpio import PiGPIOFactory
 
 # --------------------
 # GPIO SETUP
 # --------------------
-PWM_PIN = 32      # PWM0
-PWM_FREQ = 50     # 50 Hz for motor controller
+PWM_PIN = 32  # PWM0
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(PWM_PIN, GPIO.OUT)
+# GPIOZero docs recommend using the pigpio daemon to improve
+# PWM precision.
+Device.pin_factory = PiGPIOFactory()
 
-pwm = GPIO.PWM(PWM_PIN, PWM_FREQ)
-pwm.start(7.5)    # STOP signal
+motor = Servo(
+    PWM_PIN,
+    initial_value=0,
+    min_pulse_width=1 / 1000,
+    max_pulse_width=2 / 1000,
+)
 
-print("Motor initialized (STOP)")
+def ramp(motor: Servo, start, end, step=0.05, delay=0.05):
+    """Helper to test motor ramping"""
+
+    if start < end:
+        value_range = [x * step for x in range(int(start / step), int(end / step) + 1)]
+    else:
+        value_range = [x * step for x in range(int(start / step), int(end / step) - 1, -1)]
+
+    for dc in value_range:
+        motor.value = dc
+        time.sleep(delay)
+
+
+print("Motor initialized. Testing discrete values.")
 
 try:
     # FORWARD
-    print("Forward")
-    pwm.ChangeDutyCycle(8.5)  # Adjust as needed
+    print("Forward (100%)")
+    motor.value = 1  # Adjust as needed
     time.sleep(3)
 
     # STOP
     print("Stop")
-    pwm.ChangeDutyCycle(7.5)
+    motor.value = 0
     time.sleep(2)
 
     # REVERSE
-    print("Reverse")
-    pwm.ChangeDutyCycle(6.5)
+    print("Reverse (100%)")
+    motor.value = -1
     time.sleep(3)
 
     # STOP
     print("Stop")
-    pwm.ChangeDutyCycle(7.5)
+    motor.value = 0
     time.sleep(2)
+
+    # smooth forward
+    print("Ramp up (0 - 100)")
+    ramp(motor, 0, 1)
+    time.sleep(2)
+
+    # smooth stop
+    print("Ramp down (100 - 0)")
+    ramp(motor, 1, 0)
 
 except KeyboardInterrupt:
     print("Interrupted")
 
 finally:
-    pwm.stop()
-    GPIO.cleanup()
+    motor.detach()
     print("GPIO cleaned up")
-
-
-def ramp(pwm, start, end, step=0.05, delay=0.05):
-    if start < end:
-        value_range = [x * step for x in range(int(start/step), int(end/step)+1)]
-    else:
-        value_range = [x * step for x in range(int(start/step), int(end/step)-1, -1)]
-
-    for dc in value_range:
-        pwm.ChangeDutyCycle(dc)
-        time.sleep(delay)
-
-ramp(pwm, 7.5, 8.5)  # smooth forward
-time.sleep(2)
-ramp(pwm, 8.5, 7.5)  # smooth stop
