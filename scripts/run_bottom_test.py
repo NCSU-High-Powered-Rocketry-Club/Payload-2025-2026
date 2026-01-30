@@ -45,7 +45,9 @@ client = ModbusSerialClient(
     timeout=1
 )
 
-# Current sensor setup
+# ==================================================
+# ------------ CURRENT SENSOR SETUP ----------------
+# ==================================================
 
 # I2C setup
 i2c = busio.I2C(board.SCL, board.SDA)
