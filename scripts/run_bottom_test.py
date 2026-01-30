@@ -2,6 +2,9 @@ import time
 import pigpio
 import RPi.GPIO as GPIO
 from pymodbus.client import ModbusSerialClient
+import board
+import busio
+import adafruit_ina260
 
 # ==================================================
 # ---------------- SERVO SETUP ---------------------
@@ -42,6 +45,14 @@ client = ModbusSerialClient(
     timeout=1
 )
 
+# Current sensor setup
+
+# I2C setup
+i2c = busio.I2C(board.SCL, board.SDA)
+
+# INA260 object
+ina260 = adafruit_ina260.INA260(i2c)
+
 # ==================================================
 # ----------------- FUNCTIONS ----------------------
 # ==================================================
@@ -52,14 +63,18 @@ def run_servo_forward(duration):
     pi.set_servo_pulsewidth(SERVO_PIN, MID_PULSE)
     print("Servo stopped")
 
-def rotate_planetary_once():
-    print("Rotating planetary gear motor")
+def rotate_planetary_once_with_current():
+    print("Rotating planetary motor")
 
-    motor_pwm.ChangeDutyCycle(8.5)  # Forward
-    time.sleep(1.0)                # Adjust for ONE rotation
-    motor_pwm.ChangeDutyCycle(7.5) # Stop
+    motor_pwm.ChangeDutyCycle(8.5)
 
-    print("Planetary motor stopped")
+    start = time.time()
+    while time.time() - start < 1.0:
+        print(f"Current: {ina260.current:.1f} mA")
+        time.sleep(0.1)
+
+    motor_pwm.ChangeDutyCycle(7.5)
+    print("Motor stopped")
 
 
 def readMoisture(client):
@@ -168,6 +183,8 @@ def clearScreen():
         # Move cursor back down
         print("\r", end='')
 
+
+
 # ==================================================
 # -------------------- MAIN -------------------------
 # ==================================================
@@ -179,7 +196,7 @@ try:
     time.sleep(1)
 
     # 2️⃣ Rotate planetary gear motor once
-    rotate_planetary_once()
+    rotate_planetary_once_with_current()
     time.sleep(1)
 
     # 3️⃣ Soil sensor full readout
