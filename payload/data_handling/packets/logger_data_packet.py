@@ -1,9 +1,10 @@
 """
 Module for describing the data packet for the logger to log.
 """
+import msgspec
 
 
-class LoggerDataPacket(array_like=True, kw_only=True):
+class LoggerDataPacket(msgspec.Struct, array_like=True, kw_only=True):
     """
     Represents a collection of all data that the logger can log in a line.
 
