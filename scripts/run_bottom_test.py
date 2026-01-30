@@ -5,17 +5,19 @@ from pymodbus.client import ModbusSerialClient
 import board
 import busio
 import adafruit_ina260
+from gpiozero import Device, Servo
+from gpiozero.pins.pigpio import PiGPIOFactory
 
 # ==================================================
 # ---------------- SERVO SETUP ---------------------
 # ==================================================
-SERVO_PIN = 33  # GPIO33 (pigpio numbering)
+SERVO_PIN = 13  # GPIO33 (pigpio numbering)
 
 MIN_PULSE = 500
 MID_PULSE = 1500
 MAX_PULSE = 2500
 
-SERVO_RUN_TIME = 3.0  # seconds to run 5-turn servo forward
+SERVO_RUN_TIME = 1.0  # seconds to run 5-turn servo forward
 
 pi = pigpio.pi()
 if not pi.connected:
@@ -24,20 +26,20 @@ if not pi.connected:
 # ==================================================
 # ------------ PLANETARY MOTOR SETUP ---------------
 # ==================================================
-MOTOR_PWM_PIN = 32   # BCM numbering
-MOTOR_FREQ = 50
-
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(MOTOR_PWM_PIN, GPIO.OUT)
-
-motor_pwm = GPIO.PWM(MOTOR_PWM_PIN, MOTOR_FREQ)
-motor_pwm.start(7.5)  # STOP
+MOTOR_PWM_PIN = 12   # BCM numbering
+Device.pin_factory = PiGPIOFactory()
+motor = Servo(
+    MOTOR_PWM_PIN,
+    initial_value=0,
+    min_pulse_width=1 / 1000,
+    max_pulse_width=2 / 1000,
+)
 
 # ==================================================
 # -------------- SOIL SENSOR SETUP -----------------
 # ==================================================
 client = ModbusSerialClient(
-    port='/dev/ttyUSB0',   # CHANGE THIS IF NEEDED
+    port='/dev/serial0',   # CHANGE THIS IF NEEDED
     baudrate=9600,
     parity='N',
     stopbits=1,
@@ -61,21 +63,25 @@ ina260 = adafruit_ina260.INA260(i2c)
 def run_servo_forward(duration):
     print("Running 5-turn servo forward")
     pi.set_servo_pulsewidth(SERVO_PIN, MAX_PULSE)
-    time.sleep(duration)
+    # time.sleep(duration)
+
+def stop_servo():
     pi.set_servo_pulsewidth(SERVO_PIN, MID_PULSE)
     print("Servo stopped")
+
+
 
 def rotate_planetary_once_with_current():
     print("Rotating planetary motor")
 
-    motor_pwm.ChangeDutyCycle(8.5)
+    motor.value=-1
 
     start = time.time()
-    while time.time() - start < 1.0:
+    while time.time() - start < 5.0:
         print(f"Current: {ina260.current:.1f} mA")
         time.sleep(0.1)
 
-    motor_pwm.ChangeDutyCycle(7.5)
+    motor.value=0
     print("Motor stopped")
 
 
@@ -191,15 +197,41 @@ def clearScreen():
 # -------------------- MAIN -------------------------
 # ==================================================
 try:
+
     print("=== STARTING PAYLOAD SEQUENCE ===")
+    # move lift servo to top
+    pi.set_servo_pulsewidth(SERVO_PIN, MIN_PULSE)
+    # turn off planetary motor
+    motor.value=0
+    time.sleep(2.0)
+    print("starting drilling sequence")
 
-    # 1️⃣ Run 5-turn servo forward
-    run_servo_forward(SERVO_RUN_TIME)
-    time.sleep(1)
+    # start drilling
+    motor.value = -.25
+    time.sleep(0.5)
 
-    # 2️⃣ Rotate planetary gear motor once
-    rotate_planetary_once_with_current()
-    time.sleep(1)
+    pi.set_servo_pulsewidth(SERVO_PIN, 1250)
+
+    time.sleep(4.0)
+
+
+    print("drilling")
+    time.sleep(0.5)
+
+    pi.set_servo_pulsewidth(SERVO_PIN, MIN_PULSE)
+
+    time.sleep(7.0)
+    motor.value = 0
+    print("drill complete")
+
+
+    # # 1️⃣ Run 5-turn servo forward
+    # run_servo_forward(SERVO_RUN_TIME)
+    # time.sleep(1)
+
+    # # 2️⃣ Rotate planetary gear motor once
+    # rotate_planetary_once_with_current()
+    # time.sleep(1)
 
     # 3️⃣ Soil sensor full readout
     print("Activating soil sensor...")
@@ -207,7 +239,7 @@ try:
     if client.connect():
         print("Connected to Modbus RTU device.")
 
-        for i in range(480):
+        for i in range(10):
             temp = readTemperature(client)
             moisture = readMoisture(client)
             ec = readECTest(client)
@@ -225,7 +257,7 @@ try:
 
     else:
         print("Failed to connect to soil sensor.")
-
+        print("Displaying dummy data...")
         for i in range(1200):
             temp = f"Num {1 + i}"
             moisture = f"Crazy {2 - (i / 2)}"
@@ -248,10 +280,11 @@ except KeyboardInterrupt:
     print("Sequence interrupted by user")
 
 finally:
-    pi.set_servo_pulsewidth(SERVO_PIN, 0)
+    pi.set_servo_pulsewidth(SERVO_PIN, MIN_PULSE)
+    motor.value = 0
     pi.stop()
 
-    motor_pwm.stop()
+
     GPIO.cleanup()
 
     if client.connected:

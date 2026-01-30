@@ -1,0 +1,3 @@
+2025-11-13 14:42:01: Program Start
+2025-11-13 14:42:01: Connected to soil sensor
+

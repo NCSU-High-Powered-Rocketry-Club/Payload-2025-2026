@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 """
 Module for the finite state machine that represents which state of flight the rocket is in.
 """
@@ -109,3 +110,5 @@ class LandedState(State):
         We use this method to stop the air brakes system after we have hit our log buffer.
         """
         return self
+=======
+>>>>>>> Stashed changes

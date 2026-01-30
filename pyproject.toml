@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 [project]
 name = "imu-logger"
 version = "0.1.0"
@@ -14,3 +15,5 @@ python-preference = "only-managed"
 [build-system]
 requires = ["uv_build>=0.9.5,<0.10.0"]
 build-backend = "uv_build"
+=======
+>>>>>>> Stashed changes

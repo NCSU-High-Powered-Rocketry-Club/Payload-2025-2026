@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream:scripts/latch_test.py
 import RPi.GPIO as GPIO
 import time
 
@@ -40,3 +41,5 @@ finally:
     pwm.stop()
     GPIO.cleanup()
     print("GPIO cleaned up")
+=======
+>>>>>>> Stashed changes:scripts/run_latch.py

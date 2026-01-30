@@ -115,7 +115,7 @@ def clearScreen():
 
 # Create the Modbus RTU client
 client = ModbusSerialClient(
-    port='COM5',        # Replace with your actual port
+    port='/dev/serial0',        # Replace with your actual port
     baudrate=9600,
     parity='N',
     stopbits=1,
