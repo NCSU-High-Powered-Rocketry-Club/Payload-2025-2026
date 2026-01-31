@@ -19,31 +19,12 @@ class ContextDataPacket(msgspec.Struct, tag=True, array_like=True):
     This is the state that the state machine is in.
     """
 
-    retrieved_imu_packets: int
+    retrieved_firm_packets: int
     """
     This is the number of packets we got from the IMU thread, in the main thread.
 
     This number will always be below constants.MAX_FETCHED_PACKETS. If this number is on the high
     end, it indicates some performance issues with the main thread.
-    """
-
-    queued_imu_packets: int
-    """
-    The number of IMU data packets in the IMU queue, waiting to be fetched, by the
-    main thread.
-    """
-
-    apogee_predictor_queue_size: int
-    """
-    The number of apogee predictor data packets in the apogee predictor queue, waiting to be fetched
-    by the main thread.
-    """
-
-    imu_packets_per_cycle: int
-    """
-    The number of packets we directly fetch from the LORD IMU in the IMU thread.
-
-    This is before we put the packets in the queue to the main thread.
     """
 
     update_timestamp_ns: int

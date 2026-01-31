@@ -1,4 +1,11 @@
-class ZombieDataPacket:
+"""
+
+"""
+import msgspec
+
+class ZombieDataPacket(msgspec.Struct, tag=True, array_like=True):
     """Represents a data packet received from  Zombie"""
 
-    pass
+    soil_info : int
+
+    # add more as needed

@@ -22,9 +22,8 @@ from payload.utils import get_all_packets_from_queue
 
 if typing.TYPE_CHECKING:
     from pathlib import Path
-
+    from firm_client import FIRMDataPacket
     from payload.data_handling.packets.context_data_packet import ContextDataPacket
-    from payload.data_handling.packets.firm_data_packet import FIRMDataPacket
     from payload.data_handling.packets.grave_data_packet import GraveDataPacket
     from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket
 
@@ -139,13 +138,7 @@ class Logger:
         for firm_data_packet in firm_data_packets:
             logger_packet = LoggerDataPacket(
                 state_letter=context_data_packet.state.__name__[0],
-                timestamp=firm_data_packet.timestamp,
-                invalid_fields=firm_data_packet.invalid_fields,
-                retrieved_imu_packets=context_data_packet.retrieved_imu_packets,
-                queued_imu_packets=context_data_packet.queued_imu_packets,
-                apogee_predictor_queue_size=context_data_packet.apogee_predictor_queue_size,
-                imu_packets_per_cycle=context_data_packet.imu_packets_per_cycle,
-                update_timestamp_ns=context_data_packet.update_timestamp_ns,
+                timestamp_seconds=firm_data_packet.timestamp_seconds,
             )
 
             # Get the IMU data packet fields:
@@ -153,56 +146,35 @@ class Logger:
             # - isinstance is 45.2% faster than match statement
             # - hasattr is 20.57% faster than isinstance
             # - type() is 34.85% faster than hasattr
-            logger_packet.estOrientQuaternionW = firm_data_packet.estOrientQuaternionW
-            logger_packet.estOrientQuaternionX = firm_data_packet.estOrientQuaternionX
-            logger_packet.estOrientQuaternionY = firm_data_packet.estOrientQuaternionY
-            logger_packet.estOrientQuaternionZ = firm_data_packet.estOrientQuaternionZ
-            logger_packet.estPressureAlt = firm_data_packet.estPressureAlt
-            logger_packet.estAttitudeUncertQuaternionW = (
-                firm_data_packet.estAttitudeUncertQuaternionW
-            )
-            logger_packet.estAttitudeUncertQuaternionX = (
-                firm_data_packet.estAttitudeUncertQuaternionX
-            )
-            logger_packet.estAttitudeUncertQuaternionY = (
-                firm_data_packet.estAttitudeUncertQuaternionY
-            )
-            logger_packet.estAttitudeUncertQuaternionZ = (
-                firm_data_packet.estAttitudeUncertQuaternionZ
-            )
-            logger_packet.estAngularRateX = firm_data_packet.estAngularRateX
-            logger_packet.estAngularRateY = firm_data_packet.estAngularRateY
-            logger_packet.estAngularRateZ = firm_data_packet.estAngularRateZ
-            logger_packet.estCompensatedAccelX = firm_data_packet.estCompensatedAccelX
-            logger_packet.estCompensatedAccelY = firm_data_packet.estCompensatedAccelY
-            logger_packet.estCompensatedAccelZ = firm_data_packet.estCompensatedAccelZ
-            logger_packet.estLinearAccelX = firm_data_packet.estLinearAccelX
-            logger_packet.estLinearAccelY = firm_data_packet.estLinearAccelY
-            logger_packet.estLinearAccelZ = firm_data_packet.estLinearAccelZ
-            logger_packet.estGravityVectorX = firm_data_packet.estGravityVectorX
-            logger_packet.estGravityVectorY = firm_data_packet.estGravityVectorY
-            logger_packet.estGravityVectorZ = firm_data_packet.estGravityVectorZ
-
-            logger_packet.current_altitude = firm_data_packet.current_altitude
-            logger_packet.vertical_velocity = firm_data_packet.vertical_velocity
-            logger_packet.vertical_acceleration = firm_data_packet.vertical_acceleration
-            logger_packet.velocity_magnitude = firm_data_packet.velocity_magnitude
-            logger_packet.current_pitch_degrees = firm_data_packet.current_pitch_degrees
-
-            logger_packet.scaledAccelX = firm_data_packet.scaledAccelX
-            logger_packet.scaledAccelY = firm_data_packet.scaledAccelY
-            logger_packet.scaledAccelZ = firm_data_packet.scaledAccelZ
-            logger_packet.scaledGyroX = firm_data_packet.scaledGyroX
-            logger_packet.scaledGyroY = firm_data_packet.scaledGyroY
-            logger_packet.scaledGyroZ = firm_data_packet.scaledGyroZ
-            logger_packet.deltaVelX = firm_data_packet.deltaVelX
-            logger_packet.deltaVelY = firm_data_packet.deltaVelY
-            logger_packet.deltaVelZ = firm_data_packet.deltaVelZ
-            logger_packet.deltaThetaX = firm_data_packet.deltaThetaX
-            logger_packet.deltaThetaY = firm_data_packet.deltaThetaY
-            logger_packet.deltaThetaZ = firm_data_packet.deltaThetaZ
-            logger_packet.scaledAmbientPressure = firm_data_packet.scaledAmbientPressure
-
+            logger_packet.est_acceleration_x_gs = firm_data_packet.est_acceleration_x_gs
+            logger_packet.est_acceleration_y_gs = firm_data_packet.est_acceleration_y_gs
+            logger_packet.est_acceleration_z_gs = firm_data_packet.est_acceleration_z_gs
+            logger_packet.est_angular_rate_x_rad_per_s = firm_data_packet.est_angular_rate_x_rad_per_s
+            logger_packet.est_angular_rate_y_rad_per_s = firm_data_packet.est_angular_rate_y_rad_per_s
+            logger_packet.est_angular_rate_z_rad_per_s = firm_data_packet.est_angular_rate_z_rad_per_s
+            logger_packet.est_position_x_meters = firm_data_packet.est_position_x_meters
+            logger_packet.est_position_y_meters = firm_data_packet.est_position_y_meters
+            logger_packet.est_position_z_meters = firm_data_packet.est_position_z_meters
+            logger_packet.est_quaternion_w = firm_data_packet.est_quaternion_w
+            logger_packet.est_quaternion_x = firm_data_packet.est_quaternion_x
+            logger_packet.est_quaternion_y = firm_data_packet.est_quaternion_y
+            logger_packet.est_quaternion_z = firm_data_packet.est_quaternion_z
+            logger_packet.est_velocity_x_meters_per_s = firm_data_packet.est_velocity_x_meters_per_s
+            logger_packet.est_velocity_y_meters_per_s = firm_data_packet.est_velocity_y_meters_per_s
+            logger_packet.est_velocity_z_meters_per_s = firm_data_packet.est_velocity_z_meters_per_s
+            logger_packet.magnetic_field_x_microteslas = firm_data_packet.magnetic_field_x_microteslas
+            logger_packet.magnetic_field_y_microteslas = firm_data_packet.magnetic_field_y_microteslas
+            logger_packet.magnetic_field_z_microteslas = firm_data_packet.magnetic_field_z_microteslas
+            logger_packet.pressure_pascals = firm_data_packet.pressure_pascals
+            logger_packet.raw_acceleration_x_gs = firm_data_packet.raw_acceleration_x_gs
+            logger_packet.raw_acceleration_y_gs = firm_data_packet.raw_acceleration_y_gs
+            logger_packet.raw_acceleration_z_gs = firm_data_packet.raw_acceleration_z_gs
+            logger_packet.raw_angular_rate_x_deg_per_s = firm_data_packet.raw_angular_rate_x_deg_per_s
+            logger_packet.raw_angular_rate_y_deg_per_s = firm_data_packet.raw_angular_rate_y_deg_per_s
+            logger_packet.raw_angular_rate_z_deg_per_s = firm_data_packet.raw_angular_rate_z_deg_per_s
+            logger_packet.temperature_celsius = firm_data_packet.temperature_celsius
+            logger_packet.position = grave_data_packet.position
+            logger_packet.soil_info = zombie_data_packet.soil_info
             logger_data_packets.append(logger_packet)
 
         return logger_data_packets

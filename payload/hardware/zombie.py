@@ -1,10 +1,11 @@
 """This is Zombie, the part of payload that drills and analyzes soil."""
 
+from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket
 
 class Zombie:
     """A class representing a zombie payload."""
 
-    __slots__ = ()
+    __slots__ = ("soil_data",)
 
     def __init__(self):
         pass
@@ -40,3 +41,15 @@ class Zombie:
 
         :return: True if the zombie is upright, False otherwise.
         """
+    def get_soil_data(self):
+        """
+
+        """
+        soil_data = 0
+        return soil_data # temporary change as needed
+
+    def get_data_packet(self):
+        """
+
+        """
+        return ZombieDataPacket(soil_info=self.get_soil_data() )
