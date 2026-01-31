@@ -1,16 +1,64 @@
 [project]
-name = "imu-logger"
+name = "payload-2025-2026"
+requires-python = ">=3.14, <3.15"
 version = "0.1.0"
-description = "IMU data logging and state detection for rocket payload"
 readme = "README.md"
-requires-python = ">=3.10"
+dependencies = [
+    "firm-client>=1.0.0",
+    "gpiozero>=2.0.1",
+    "msgspec>=0.20.0",
+    "pigpio>=1.78",
+]
 
-dependencies = ["pandas", "firm-client"]
+[project.scripts]
+grave = "payload.main:run_grave"
+zombie = "payload.main:run_zombie"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.0",
+    "pytest-cov",
+    "ruff>=0.12.12",
+    "pre-commit",
+    "ty>=0.0.1a20",
+]
 
 # UV:
 [tool.uv]
 python-preference = "only-managed"
 
 [build-system]
-requires = ["uv_build>=0.9.5,<0.10.0"]
-build-backend = "uv_build"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# HATCH:
+[tool.hatch.build.targets.wheel]
+packages = ["payload"]
+
+# RUFF:
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+show-fixes = true
+exclude = ["scripts"]
+
+[tool.ruff.lint]
+ignore = [
+    "PLR2004", "PLR0911", "PLR0912", "PLR0913", "PLR0915", "PERF203", "ISC001", "S311",
+    "D102", "D103", "D104", "D107", "D205", "D401", "D200",
+]
+select = [
+    "E", "F", "I", "PL", "UP", "RUF", "PTH", "C4", "B", "PIE", "SIM", "RET", "RSE",
+    "G", "ISC", "PT", "ASYNC", "TCH", "SLOT", "PERF", "PYI", "FLY", "AIR", "Q", "INP",
+    "W", "YTT", "DTZ", "ARG", "T20", "FURB", "D100", "D101", "D300", "D418",
+    "D419", "S", "NPY", "D", "D213",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
+
+[tool.ty.environment]
+root = ["./payload"]
+
+[tool.ty.src]
+exclude = ["tests", "scripts"]
