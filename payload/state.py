@@ -2,9 +2,11 @@
 Module for the finite state machine that represents which state of flight the rocket is in.
 """
 
+import asyncio
 import time
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
+import threading
 
 from payload.constants import (
     GRAVE_DEPLOY_LENGTH_SECONDS,
@@ -132,7 +134,7 @@ class LandedState(State):
 
 class DeployZombieState(State):
     """
-    When the rocket has deployed the zombie chute.
+    This state runs on GRAVE and deploys zombie. After that, it does nothing.
     """
 
     __slots__ = ("_deploy_started",)
@@ -168,6 +170,8 @@ class ZombieDeployedState(State):
         # TODO: call some method in context that moves the legs and stands zombie up
         # TODO: write code to detect if zombie is oriented correctly and legs are deployed, then go
         #  to next state
+        if self.context.zombie.legs_deployed:
+            self.next_state()
 
     def next_state(self) -> None:
         self.context.state = ZombieDrillingState(self.context)
@@ -178,7 +182,15 @@ class ZombieDrillingState(State):
     When the rocket has stood the zombie chute up.
     """
 
-    __slots__ = ()
+    __slots__ = ("drill_thread",)
+
+    def __init__(self, context):
+        super().__init__(context)
+
+        # Tell zombie to start the drill sequence.
+        # All timing for deployment will be handled by
+        # the zombie class.
+        context.zombie.start_drill_sequence()
 
     def update(self) -> None:
         """
@@ -186,6 +198,9 @@ class ZombieDrillingState(State):
         """
         # TODO: call some method in context to do the drilling
         # TODO: write code to detect if the soil has been collected
+
+        if self.context.zombie.drilling_complete:
+            self.next_state()
 
     def next_state(self) -> None:
         pass
