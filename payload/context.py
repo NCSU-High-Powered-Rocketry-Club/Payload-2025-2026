@@ -92,6 +92,7 @@ class Context:
             self.zombie_data_packet,
         )
 
+    # Ask Jackson about how this works
     def deploy_zombie(self):
         """
         Deploys Zombie out of the rocket. This method should only be called if code is Grave.

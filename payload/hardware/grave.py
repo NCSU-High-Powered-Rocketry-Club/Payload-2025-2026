@@ -16,7 +16,9 @@ class Grave:
         """
         The deployment of a zombie payload.
         """
+        # call function to release latch, then run lead screw motor.
 
+    # Ask Jackson: Is this airbreaks code?
     def get_motor_extension(self):
         servo_extension_position = 0
         return servo_extension_position # temporary change as needed
