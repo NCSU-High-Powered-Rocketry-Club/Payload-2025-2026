@@ -21,3 +21,5 @@ class TestGrave(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+# to run, type py -m unittest scripts.run_grave_test in command line
