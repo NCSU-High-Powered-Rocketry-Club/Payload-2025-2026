@@ -2,63 +2,43 @@
 
 import time
 from payload.data_handling.packets.grave_data_packet import GraveDataPacket
-from gpiozero import Device, Servo
-from gpiozero.pins.pigpio import PiGPIOFactory
-import board
-from digitalio import DigitalInOut, Direction
+
 
 class Grave:
     """A mock class representing a graveyard for testing purposes."""
 
-    __slots__ = ("servo_extension_position",)
+    __slots__ = ("servo", "lead_screw", "deployed")
 
-    def __init__(self):
-        """
-        Initializes the Grave instance.
-        """
+    """
+    High-level controller for the Grave deployment system.
+    Contains no direct GPIO imports.
+    """
 
-    def deploy_zombie(self) -> None:
-        """
-        The deployment of a zombie payload.
-        """
-        SERVO_PIN = 18     # GPIO pin connected to servo signal
+    def __init__(self, servo_driver, lead_screw_driver):
+        self.servo = servo_driver
+        self.lead_screw = lead_screw_driver
+        self.deployed = False
 
-        # GPIOZero docs recommend using the pigpio daemon to improve
-        # PWM precision.
-        Device.pin_factory = PiGPIOFactory()
+    def start(self):
+        print("Grave system initialized.")
 
-        servo = Servo(SERVO_PIN, initial_value=0)
+    def update(self):
+        # For now, auto-deploy once.
+        if not self.deployed:
+            self.deploy_zombie()
+            self.deployed = True
 
-        print("Servo initialized at center")
+    def stop(self):
+        print("Grave system shutting down.")
 
-        print("Move to LEFT")
-        servo.min()
-        time.sleep(0.5)
+    def deploy_zombie(self):
+        print("Releasing latch...")
+        self.servo.release_latch()
 
-        print("Center")
-        servo.mid()
-        time.sleep(0.5)
+        print("Extending lead screw...")
+        self.lead_screw.extend(50)  # mm
 
-        # call function to release latch, then run lead screw motor.
-        DISTANCE = 50 #mm
-        STEPS = int(DISTANCE / 0.01)
-
-        DIR = DigitalInOut(board.D27)
-        DIR.direction = Direction.OUTPUT
-        STEP = DigitalInOut(board.D22)
-        STEP.direction = Direction.OUTPUT
-
-        microMode = 16
-        # full rotation multiplied by the microstep divider
-        steps = STEPS * microMode
-
-        for i in range(steps):
-            STEP.value = True
-            time.sleep(0.002)
-            STEP.value = False
-            time.sleep(0.002)
-        # 1 second delay before starting again
-        time.sleep(1)
+        print("Deployment complete.")
 
 
     # Ask Jackson: Is this airbreaks code?
