@@ -4,7 +4,7 @@ from gpiozero.pins.pigpio import PiGPIOFactory
 
 
 class ServoDriver:
-    def __init__(self, pin=18):
+    def __init__(self, pin=24):
         Device.pin_factory = PiGPIOFactory()
         self.servo = Servo(pin, initial_value=0)
 
@@ -13,8 +13,8 @@ class ServoDriver:
 
         print("Move to LEFT")
         self.servo.min()
-        time.sleep(0.5)
+        time.sleep(0.1)
 
         print("Center")
         self.servo.mid()
-        time.sleep(0.5)
+        time.sleep(0.1)
