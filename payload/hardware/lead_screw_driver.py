@@ -20,8 +20,8 @@ class LeadScrewDriver:
 
         for _ in range(steps):
             self.step.value = True
-            time.sleep(0.002)
+            time.sleep(0.0005)
             self.step.value = False
-            time.sleep(0.002)
+            time.sleep(0.0005)
 
         time.sleep(1)

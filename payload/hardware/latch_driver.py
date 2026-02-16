@@ -3,7 +3,7 @@ from gpiozero import Device, AngularServo
 from gpiozero.pins.pigpio import PiGPIOFactory
 
 class ServoDriver:
-    def __init__(self, pin=24, min_angle=0, max_angle=30):
+    def __init__(self, pin=24, min_angle=0, max_angle=198, min_pulse_width = 0.00075, max_pulse_width = 0.00225):
         """
         Initializes the ServoDriver for a non-continuous servo.
 
@@ -16,11 +16,11 @@ class ServoDriver:
         Device.pin_factory = PiGPIOFactory()
 
         # Create AngularServo for non-continuous servo
-        self.servo = AngularServo(pin, min_angle=min_angle, max_angle=max_angle)
+        self.servo = AngularServo(pin, min_angle=min_angle, max_angle=max_angle,min_pulse_width = min_pulse_width, max_pulse_width = max_pulse_width)
 
         # Store deployment angles for convenience
-        self.start_angle = min_angle
-        self.deploy_angle = (min_angle + max_angle) / 2  # default middle
+        self.start_angle = 190
+        self.deploy_angle = 160
         self.max_angle = max_angle
 
     def release_latch(self):
@@ -30,14 +30,14 @@ class ServoDriver:
         try:
             print("Servo initialized. Moving to starting position...")
             self.servo.angle = self.start_angle
-            time.sleep(0.5)
+            time.sleep(2)
             print("Deploying latch...")
             self.servo.angle = self.deploy_angle
-            time.sleep(0.5)
+            time.sleep(2)
 
             print("Returning to start position...")
             self.servo.angle = self.start_angle
-            time.sleep(0.5)
+            time.sleep(2)
 
         finally:
             # Stop sending PWM to release torque
