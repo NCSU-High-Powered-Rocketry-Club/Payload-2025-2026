@@ -1,9 +1,16 @@
+"""General file for the lead screw driver."""
+
 import time
+
 import board
 from digitalio import DigitalInOut, Direction
 
 
 class LeadScrewDriver:
+    """
+    Driver for the lead screw.
+    """
+
     def __init__(self, dir_pin=board.D27, step_pin=board.D22):
         self.dir = DigitalInOut(dir_pin)
         self.dir.direction = Direction.OUTPUT

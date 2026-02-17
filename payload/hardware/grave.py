@@ -1,13 +1,12 @@
 """This is Grave, the part of payload that ejects Zombie."""
 
-import time
 from payload.data_handling.packets.grave_data_packet import GraveDataPacket
 
 
 class Grave:
     """A mock class representing a graveyard for testing purposes."""
 
-    __slots__ = ("servo", "lead_screw", "deployed")
+    __slots__ = ("deployed", "lead_screw", "servo")
 
     """
     High-level controller for the Grave deployment system.
@@ -20,7 +19,7 @@ class Grave:
         self.deployed = False
 
     def start(self):
-        print("Grave system initialized.")
+        pass
 
     def update(self):
         # For now, auto-deploy once.
@@ -29,22 +28,17 @@ class Grave:
             self.deployed = True
 
     def stop(self):
-        print("Grave system shutting down.")
+        pass
 
     def deploy_zombie(self):
-        print("Releasing latch...")
         self.servo.release_latch()
 
-        print("Extending lead screw...")
         self.lead_screw.extend(50)  # mm
-
-        print("Deployment complete.")
 
 
     # Ask Jackson: Is this airbreaks code?
     def get_motor_extension(self):
-        servo_extension_position = 0
-        return servo_extension_position # temporary change as needed
+        return 0
 
     def get_data_packet(self):
         return GraveDataPacket(position=self.get_motor_extension())

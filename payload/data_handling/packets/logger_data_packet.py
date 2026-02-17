@@ -1,6 +1,7 @@
 """
 Module for describing the data packet for the logger to log.
 """
+
 import msgspec
 
 
@@ -46,7 +47,7 @@ class LoggerDataPacket(msgspec.Struct, array_like=True, kw_only=True):
     timestamp_seconds: float | None = None
 
     # Grave packets
-    position : None = None
+    position: None = None
 
     # Zombie packets
     soil_info: None = None

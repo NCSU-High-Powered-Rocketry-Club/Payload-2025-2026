@@ -9,9 +9,9 @@ from payload.context import Context
 from payload.data_handling.logger import Logger
 from payload.hardware.firm import FIRM
 from payload.hardware.grave import Grave
-from payload.hardware.zombie import Zombie
 from payload.hardware.latch_driver import ServoDriver
 from payload.hardware.lead_screw_driver import LeadScrewDriver
+from payload.hardware.zombie import Zombie
 
 
 # TODO: eventually add more stuff here like the logger
@@ -31,20 +31,9 @@ def run_grave():
     lead_screw_driver = LeadScrewDriver()
 
     # Inject them into Grave
-    grave = Grave(
-        servo_driver=servo_driver,
-        lead_screw_driver=lead_screw_driver
-    )
+    grave = Grave(servo_driver=servo_driver, lead_screw_driver=lead_screw_driver)
 
-    run_flight_loop(
-        Context(
-            grave=grave,
-            zombie=None,
-            firm=firm,
-            logger=logger
-        )
-    )
-
+    run_flight_loop(Context(grave=grave, zombie=None, firm=firm, logger=logger))
 
 
 def run_zombie():

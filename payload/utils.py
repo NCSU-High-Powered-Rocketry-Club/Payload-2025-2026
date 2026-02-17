@@ -3,17 +3,18 @@ File which contains utility functions which can be reused in the project.
 """
 
 import queue
-from typing import Any
 import time
+from typing import Any
+
+import adafruit_ina260
 import board
+import busio
+import pigpio
 from digitalio import DigitalInOut, Direction
 from gpiozero import Device, Servo
 from gpiozero.pins.pigpio import PiGPIOFactory
-import pigpio
-import RPi.GPIO as GPIO
 from pymodbus.client import ModbusSerialClient
-import busio
-import adafruit_ina260
+from RPi import GPIO
 
 
 def convert_unknown_type_to_float(obj_type: Any) -> float:
@@ -102,11 +103,12 @@ def lead_screw_zombie(distance_mm: float, delay: float) -> None:
 
     DIR.value = not DIR.value
     while True:
-        for i in range(steps):
+        for _i in range(steps):
             STEP.value = True
             time.sleep(delay)
             STEP.value = False
             time.sleep(delay)
+
 
 def lead_screw_grave(distance_mm: float, delay: float) -> None:
     """
@@ -124,11 +126,12 @@ def lead_screw_grave(distance_mm: float, delay: float) -> None:
 
     DIR.value = not DIR.value
 
-    for i in range(steps):
+    for _i in range(steps):
         STEP.value = True
         time.sleep(delay)
         STEP.value = False
         time.sleep(delay)
+
 
 def latch_servo(delay: float) -> None:
     """
@@ -155,7 +158,6 @@ def run_zombie_bottom() -> None:
     """
     SERVO_PIN = 33  # GPIO33 (pigpio numbering)
 
-    MIN_PULSE = 500
     MID_PULSE = 1500
     MAX_PULSE = 2500
 
@@ -168,7 +170,7 @@ def run_zombie_bottom() -> None:
     # ==================================================
     # ------------ PLANETARY MOTOR SETUP ---------------
     # ==================================================
-    MOTOR_PWM_PIN = 32   # BCM numbering
+    MOTOR_PWM_PIN = 32  # BCM numbering
     MOTOR_FREQ = 50
 
     GPIO.setmode(GPIO.BCM)
@@ -181,12 +183,12 @@ def run_zombie_bottom() -> None:
     # -------------- SOIL SENSOR SETUP -----------------
     # ==================================================
     client = ModbusSerialClient(
-        port='/dev/ttyUSB0',   # CHANGE THIS IF NEEDED
+        port="/dev/ttyUSB0",  # CHANGE THIS IF NEEDED
         baudrate=9600,
-        parity='N',
+        parity="N",
         stopbits=1,
         bytesize=8,
-        timeout=1
+        timeout=1,
     )
 
     # ==================================================
@@ -197,92 +199,73 @@ def run_zombie_bottom() -> None:
     i2c = busio.I2C(board.SCL, board.SDA)
 
     # INA260 object
-    ina260 = adafruit_ina260.INA260(i2c)
+    adafruit_ina260.INA260(i2c)
 
     # ==================================================
     # ----------------- FUNCTIONS ----------------------
     # ==================================================
     def run_servo_forward(duration):
-        print("Running 5-turn servo forward")
         pi.set_servo_pulsewidth(SERVO_PIN, MAX_PULSE)
         time.sleep(duration)
         pi.set_servo_pulsewidth(SERVO_PIN, MID_PULSE)
-        print("Servo stopped")
 
     def rotate_planetary_once_with_current():
-        print("Rotating planetary motor")
 
         motor_pwm.ChangeDutyCycle(8.5)
 
         start = time.time()
         while time.time() - start < 1.0:
-            print(f"Current: {ina260.current:.1f} mA")
             time.sleep(0.1)
 
         motor_pwm.ChangeDutyCycle(7.5)
-        print("Motor stopped")
-
 
     def readMoisture(client):
         result = client.read_holding_registers(address=0x12, count=1, device_id=1)
-        
+
         if result.isError():
             moistureLevelOutput = "error"
         else:
             result = result.registers[0]
-        
+
             moistureLevel = result * 0.1
             moistureLevelOutput = f"Moisture: {moistureLevel}%"
         return moistureLevelOutput
-            
-            
+
     def readTemperature(client):
         result = client.read_holding_registers(address=0x13, count=1, device_id=1)
-        
+
         if result.isError():
             tempOutput = "error"
         else:
             result = result.registers[0]
-            
+
             temperatureC = result * 0.1
-            temperatureF = temperatureC * (9/5) + 32
-            
+            temperatureF = temperatureC * (9 / 5) + 32
+
             tempOutput = f"Temperature: {temperatureF}\u00b0F/{temperatureC}\u00b0C"
-            
+
         return tempOutput
-            
 
     def readEC(client):
         result1 = client.read_holding_registers(address=0x14, count=1, device_id=1)
         result2 = client.read_holding_registers(address=0x15, count=1, device_id=1)
-        
+
         if result1.isError():
             ecOutput = "error"
         else:
             result1 = result1.registers[0] * 256
             result2 = result2.registers[0]
-            
-            
+
             ecOutput = f"EC: {result1 + result2} us/cm"
-            
+
         return ecOutput
 
     def readECTest(client):
-        
         result = client.read_holding_registers(address=0x15, count=1, device_id=1)
-        
-        if result.isError():
-            ecOutput = "error"
-        else:
-            #high_word = result.registers[0]  # register at 0x14
-            #low_word = result.registers[1]   # register at 0x15
 
-            #combined = (high_word << 16) | low_word  # shift high word 16 bits left, OR with low word
 
-            ecOutput = f"EC: {result.registers[0]} us/cm"
-            
-        return ecOutput
-            
+        return "error" if result.isError() else f"EC: {result.registers[0]} us/cm"
+
     def readpH(client):
         result = client.read_holding_registers(address=0x06, count=1, device_id=1)
 
@@ -290,52 +273,46 @@ def run_zombie_bottom() -> None:
             pHOutput = "error"
         else:
             result = result.registers[0]
-            
+
             pH = result * 0.01
-            
+
             pHOutput = f"pH: {pH}"
-        return pHOutput    
-            
+        return pHOutput
+
     def readNPK(client):
         result = client.read_holding_registers(address=0x1E, count=3, device_id=1)
-        
+
         if result.isError():
             nitrogenOutput = "error"
             phosphorusOutput = "error"
             potassiumOutput = "error"
-            
+
         else:
             nitrogenContent = result.registers[0]
             phosphorusContent = result.registers[1]
             potassiumContent = result.registers[2]
-            
+
             nitrogenOutput = f"Nitrogen: {nitrogenContent} mg/kg"
             phosphorusOutput = f"Phosphorus: {phosphorusContent} mg/kg"
             potassiumOutput = f"Potassium: {potassiumContent} mg/kg"
-            
-        npkOutput = [nitrogenOutput, phosphorusOutput, potassiumOutput]
-        
-        return npkOutput
-            
+
+        return [nitrogenOutput, phosphorusOutput, potassiumOutput]
+
+
     def printData(data):
-        print("\n".join(data))
-        
+        pass
+
     def clearScreen():
         for _ in range(10):
             # Move cursor up one line
-            print("\033[F", end='')   # Equivalent to cursor up
             # Clear the line
-            print("\033[K", end='')   # Equivalent to clear line
             # Move cursor back down
-            print("\r", end='')
-
-
+            pass
 
     # ==================================================
     # -------------------- MAIN -------------------------
     # ==================================================
     try:
-        print("=== STARTING PAYLOAD SEQUENCE ===")
 
         # 1️⃣ Run 5-turn servo forward
         run_servo_forward(SERVO_RUN_TIME)
@@ -346,12 +323,10 @@ def run_zombie_bottom() -> None:
         time.sleep(1)
 
         # 3️⃣ Soil sensor full readout
-        print("Activating soil sensor...")
 
         if client.connect():
-            print("Connected to Modbus RTU device.")
 
-            for i in range(480):
+            for _i in range(480):
                 temp = readTemperature(client)
                 moisture = readMoisture(client)
                 ec = readECTest(client)
@@ -361,14 +336,13 @@ def run_zombie_bottom() -> None:
                 titleLine = "Soil Data"
                 dashLine = "-------------------------"
 
-                data = [titleLine, dashLine, temp, moisture, ec, pH] + npk + [dashLine]
+                data = [titleLine, dashLine, temp, moisture, ec, pH, *npk, dashLine]
 
                 clearScreen()
                 printData(data)
                 time.sleep(0.25)
 
         else:
-            print("Failed to connect to soil sensor.")
 
             for i in range(100):
                 temp = f"Num {1 + i}"
@@ -386,7 +360,6 @@ def run_zombie_bottom() -> None:
                 time.sleep(0.1)
                 clearScreen()
 
-        print("=== SEQUENCE COMPLETE ===")
 
     finally:
         pi.set_servo_pulsewidth(SERVO_PIN, 0)
@@ -398,4 +371,3 @@ def run_zombie_bottom() -> None:
         if client.connected:
             client.close()
 
-        print("GPIO, pigpio, and Modbus cleaned up")
