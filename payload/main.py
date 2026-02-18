@@ -9,8 +9,6 @@ from payload.context import Context
 from payload.data_handling.logger import Logger
 from payload.hardware.firm import FIRM
 from payload.hardware.grave import Grave
-from payload.hardware.latch_driver import ServoDriver
-from payload.hardware.lead_screw_driver import LeadScrewDriver
 from payload.hardware.zombie import Zombie
 
 
@@ -25,13 +23,7 @@ def create_components() -> tuple[FIRM, Logger]:
 def run_grave():
     """Runs the code for Grave."""
     firm, logger = create_components()
-
-    # Instantiate hardware drivers
-    servo_driver = ServoDriver()
-    lead_screw_driver = LeadScrewDriver()
-
-    # Inject them into Grave
-    grave = Grave(servo_driver=servo_driver, lead_screw_driver=lead_screw_driver)
+    grave = Grave()
 
     run_flight_loop(Context(grave=grave, zombie=None, firm=firm, logger=logger))
 
