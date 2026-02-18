@@ -1,15 +1,16 @@
 """This is Grave, the part of payload that ejects Zombie."""
 
-from payload.data_handling.packets.grave_data_packet import GraveDataPacket
 import time
+
+# Lead screw imports
+import board
+from digitalio import DigitalInOut, Direction
 
 # Servo imports
 from gpiozero import AngularServo, Device
 from gpiozero.pins.pigpio import PiGPIOFactory
 
-# Lead screw imports
-import board
-from digitalio import DigitalInOut, Direction
+from payload.data_handling.packets.grave_data_packet import GraveDataPacket
 
 
 class ServoDriver:

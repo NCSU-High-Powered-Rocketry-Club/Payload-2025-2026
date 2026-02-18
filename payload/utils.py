@@ -3,18 +3,7 @@ File which contains utility functions which can be reused in the project.
 """
 
 import queue
-import time
 from typing import Any
-
-import adafruit_ina260
-import board
-import busio
-import pigpio
-from digitalio import DigitalInOut, Direction
-from gpiozero import Device, Servo
-from gpiozero.pins.pigpio import PiGPIOFactory
-from pymodbus.client import ModbusSerialClient
-from RPi import GPIO
 
 
 def convert_unknown_type_to_float(obj_type: Any) -> float:
