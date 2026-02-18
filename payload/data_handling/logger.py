@@ -22,7 +22,9 @@ from payload.utils import get_all_packets_from_queue
 
 if typing.TYPE_CHECKING:
     from pathlib import Path
+
     from firm_client import FIRMDataPacket
+
     from payload.data_handling.packets.context_data_packet import ContextDataPacket
     from payload.data_handling.packets.grave_data_packet import GraveDataPacket
     from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket
@@ -132,8 +134,6 @@ class Logger:
         """
         logger_data_packets: list[LoggerDataPacket] = []
 
-        index = 0  # Index to loop over processor data packets:
-
         # Convert the imu data packets to a LoggerDataPacket:
         for firm_data_packet in firm_data_packets:
             logger_packet = LoggerDataPacket(
@@ -149,9 +149,15 @@ class Logger:
             logger_packet.est_acceleration_x_gs = firm_data_packet.est_acceleration_x_gs
             logger_packet.est_acceleration_y_gs = firm_data_packet.est_acceleration_y_gs
             logger_packet.est_acceleration_z_gs = firm_data_packet.est_acceleration_z_gs
-            logger_packet.est_angular_rate_x_rad_per_s = firm_data_packet.est_angular_rate_x_rad_per_s
-            logger_packet.est_angular_rate_y_rad_per_s = firm_data_packet.est_angular_rate_y_rad_per_s
-            logger_packet.est_angular_rate_z_rad_per_s = firm_data_packet.est_angular_rate_z_rad_per_s
+            logger_packet.est_angular_rate_x_rad_per_s = (
+                firm_data_packet.est_angular_rate_x_rad_per_s
+            )
+            logger_packet.est_angular_rate_y_rad_per_s = (
+                firm_data_packet.est_angular_rate_y_rad_per_s
+            )
+            logger_packet.est_angular_rate_z_rad_per_s = (
+                firm_data_packet.est_angular_rate_z_rad_per_s
+            )
             logger_packet.est_position_x_meters = firm_data_packet.est_position_x_meters
             logger_packet.est_position_y_meters = firm_data_packet.est_position_y_meters
             logger_packet.est_position_z_meters = firm_data_packet.est_position_z_meters
@@ -162,16 +168,28 @@ class Logger:
             logger_packet.est_velocity_x_meters_per_s = firm_data_packet.est_velocity_x_meters_per_s
             logger_packet.est_velocity_y_meters_per_s = firm_data_packet.est_velocity_y_meters_per_s
             logger_packet.est_velocity_z_meters_per_s = firm_data_packet.est_velocity_z_meters_per_s
-            logger_packet.magnetic_field_x_microteslas = firm_data_packet.magnetic_field_x_microteslas
-            logger_packet.magnetic_field_y_microteslas = firm_data_packet.magnetic_field_y_microteslas
-            logger_packet.magnetic_field_z_microteslas = firm_data_packet.magnetic_field_z_microteslas
+            logger_packet.magnetic_field_x_microteslas = (
+                firm_data_packet.magnetic_field_x_microteslas
+            )
+            logger_packet.magnetic_field_y_microteslas = (
+                firm_data_packet.magnetic_field_y_microteslas
+            )
+            logger_packet.magnetic_field_z_microteslas = (
+                firm_data_packet.magnetic_field_z_microteslas
+            )
             logger_packet.pressure_pascals = firm_data_packet.pressure_pascals
             logger_packet.raw_acceleration_x_gs = firm_data_packet.raw_acceleration_x_gs
             logger_packet.raw_acceleration_y_gs = firm_data_packet.raw_acceleration_y_gs
             logger_packet.raw_acceleration_z_gs = firm_data_packet.raw_acceleration_z_gs
-            logger_packet.raw_angular_rate_x_deg_per_s = firm_data_packet.raw_angular_rate_x_deg_per_s
-            logger_packet.raw_angular_rate_y_deg_per_s = firm_data_packet.raw_angular_rate_y_deg_per_s
-            logger_packet.raw_angular_rate_z_deg_per_s = firm_data_packet.raw_angular_rate_z_deg_per_s
+            logger_packet.raw_angular_rate_x_deg_per_s = (
+                firm_data_packet.raw_angular_rate_x_deg_per_s
+            )
+            logger_packet.raw_angular_rate_y_deg_per_s = (
+                firm_data_packet.raw_angular_rate_y_deg_per_s
+            )
+            logger_packet.raw_angular_rate_z_deg_per_s = (
+                firm_data_packet.raw_angular_rate_z_deg_per_s
+            )
             logger_packet.temperature_celsius = firm_data_packet.temperature_celsius
             logger_packet.position = grave_data_packet.position
             logger_packet.soil_info = zombie_data_packet.soil_info

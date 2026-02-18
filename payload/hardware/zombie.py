@@ -2,6 +2,7 @@
 
 from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket
 
+
 class Zombie:
     """A class representing a zombie payload."""
 
@@ -41,15 +42,11 @@ class Zombie:
 
         :return: True if the zombie is upright, False otherwise.
         """
-    def get_soil_data(self):
-        """
 
-        """
-        soil_data = 0
-        return soil_data # temporary change as needed
+    def get_soil_data(self):
+        """Function to get the soil data from the sensor."""
+        return 0
 
     def get_data_packet(self):
-        """
-
-        """
-        return ZombieDataPacket(soil_info=self.get_soil_data() )
+        """Get the data packet for zombie. This will involve firm data and soil sensor data."""
+        return ZombieDataPacket(soil_info=self.get_soil_data())

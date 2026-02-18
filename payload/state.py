@@ -132,7 +132,7 @@ class LandedState(State):
 
 class DeployZombieState(State):
     """
-    When the rocket has deployed the zombie chute.
+    When the rocket has deployed the zombie lander.
     """
 
     __slots__ = ("_deploy_started",)
@@ -175,7 +175,7 @@ class ZombieDeployedState(State):
 
 class ZombieDrillingState(State):
     """
-    When the rocket has stood the zombie chute up.
+    When the rocket has stood the zombie lander up.
     """
 
     __slots__ = ()

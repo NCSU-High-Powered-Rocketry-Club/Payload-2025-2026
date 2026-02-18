@@ -3,15 +3,15 @@
 import time
 from typing import TYPE_CHECKING
 
-from payload.data_handling.logger import Logger
 from payload.data_handling.packets.context_data_packet import ContextDataPacket
 from payload.data_handling.packets.grave_data_packet import GraveDataPacket
 from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket
-
 from payload.state import StandbyState
 
 if TYPE_CHECKING:
     from firm_client import FIRMDataPacket
+
+    from payload.data_handling.logger import Logger
     from payload.hardware.firm import FIRM
     from payload.hardware.grave import Grave
     from payload.hardware.zombie import Zombie
@@ -72,8 +72,6 @@ class Context:
     def update(self):
         self.firm_data_packets = self.firm.get_data_packets()
 
-
-
         # If we don't have any packets, don't do anything
         if not self.firm_data_packets:
             return
@@ -92,13 +90,14 @@ class Context:
             self.zombie_data_packet,
         )
 
+    # Ask Jackson about how this works
     def deploy_zombie(self):
         """
         Deploys Zombie out of the rocket. This method should only be called if code is Grave.
         """
         self.grave.deploy_zombie()
 
-    def generate_data_packets (self) -> None:
+    def generate_data_packets(self) -> None:
         self.context_data_packet = ContextDataPacket(
             state=type(self.state),
             retrieved_firm_packets=len(self.firm_data_packets),
