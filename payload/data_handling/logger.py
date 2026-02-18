@@ -134,7 +134,6 @@ class Logger:
         """
         logger_data_packets: list[LoggerDataPacket] = []
 
-
         # Convert the imu data packets to a LoggerDataPacket:
         for firm_data_packet in firm_data_packets:
             logger_packet = LoggerDataPacket(
