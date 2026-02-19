@@ -21,8 +21,8 @@ class ServoDriver:
 
         self.servo = AngularServo(pin, min_angle=min_angle, max_angle=max_angle, min_pulse_width=min_pwm_signal, max_pulse_width=max_pwm_signal)
 
-        self.start_angle = max_angle
-        self.deploy_angle = max_angle - 15
+        self.start_angle = max_angle- 1
+        self.deploy_angle = max_angle - 40
         self.max_angle = max_angle
 
     def release_latch(self):
