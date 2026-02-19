@@ -90,6 +90,8 @@ class Grave:
         self.servo = ServoDriver()
         self.lead_screw = LeadScrewDriver()
         self.deployed = False
+        self.latch_state = 0
+        self.motor_extention = 0
 
     def start(self):
         pass
@@ -104,10 +106,16 @@ class Grave:
 
     def deploy_zombie(self):
         self.servo.release_latch()
+        self.latch_state = 1
+        time.sleep(2)
+        self.motor_extention = 1
         self.lead_screw.extend(50)  # mm
 
     def get_motor_extension(self):
-        return 0
+        return self.motor_extention
+    
+    def get_latch_state(self):
+        return self.latch_state
 
     def get_data_packet(self):
-        return GraveDataPacket(position=self.get_motor_extension())
+        return GraveDataPacket(position=self.get_motor_extension(), latch=self.get_latch_state())
