@@ -10,14 +10,7 @@ from payload.hardware.lead_screw_driver import LeadScrewDriver
 
 def main():
     print("Initializing hardware drivers...")
-
-    servo = ServoDriver()
-    lead_screw = LeadScrewDriver()
-
-    grave = Grave(
-        servo_driver=servo,
-        lead_screw_driver=lead_screw
-    )
+    grave = Grave()
 
     print("Deploying Zombie (hardware test)...")
     grave.deploy_zombie()
