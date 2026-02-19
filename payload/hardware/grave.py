@@ -21,7 +21,7 @@ class ServoDriver:
 
         self.servo = AngularServo(pin, min_angle=min_angle, max_angle=max_angle, min_pulse_width=min_pwm_signal, max_pulse_width=max_pwm_signal)
 
-        self.start_angle = min_angle
+        self.start_angle = 0
         self.deploy_angle = 15
         self.max_angle = max_angle
 
@@ -63,7 +63,7 @@ class LeadScrewDriver:
         microMode = 16
         steps = STEPS * microMode
 
-        self.dir.value = True  # Set direction to extend
+        self.dir.value = False  # Set direction to extend
 
         for _ in range(steps):
             self.step.value = True
