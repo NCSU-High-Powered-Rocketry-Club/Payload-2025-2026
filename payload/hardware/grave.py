@@ -16,13 +16,13 @@ from payload.data_handling.packets.grave_data_packet import GraveDataPacket
 class ServoDriver:
     """Driver for the latch servo."""
 
-    def __init__(self, pin=24, min_angle=0, max_angle=30):
+    def __init__(self, pin=24, min_angle=198, max_angle=0, min_pwm_signal=0.00075, max_pwm_signal=0.00225):
         Device.pin_factory = PiGPIOFactory()
 
-        self.servo = AngularServo(pin, min_angle=min_angle, max_angle=max_angle)
+        self.servo = AngularServo(pin, min_angle=min_angle, max_angle=max_angle, min_pulse_width=min_pwm_signal, max_pulse_width=max_pwm_signal)
 
         self.start_angle = min_angle
-        self.deploy_angle = (min_angle + max_angle) / 2
+        self.deploy_angle = 15
         self.max_angle = max_angle
 
     def release_latch(self):
