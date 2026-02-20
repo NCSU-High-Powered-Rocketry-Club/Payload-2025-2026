@@ -16,9 +16,7 @@ from payload.data_handling.packets.grave_data_packet import GraveDataPacket
 class ServoDriver:
     """Driver for the latch servo."""
 
-    def __init__(
-        self, pin=24, min_angle=0, max_angle=198, min_pwm_signal=0.00075, max_pwm_signal=0.00225
-    ):
+    def __init__(self, pin=5, min_angle=0, max_angle=198, min_pwm_signal=0.00075, max_pwm_signal=0.00225):
         Device.pin_factory = PiGPIOFactory()
 
         self.servo = AngularServo(
@@ -59,7 +57,7 @@ class ServoDriver:
 class LeadScrewDriver:
     """Driver for the lead screw."""
 
-    def __init__(self, dir_pin=board.D27, step_pin=board.D22):
+    def __init__(self, dir_pin=board.D6, step_pin=board.D13):
         self.dir = DigitalInOut(dir_pin)
         self.dir.direction = Direction.OUTPUT
 
