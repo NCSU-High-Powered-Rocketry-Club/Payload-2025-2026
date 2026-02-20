@@ -14,7 +14,7 @@ class LoggerDataPacket(msgspec.Struct, array_like=True, kw_only=True):
     """
 
     # Fields derived from ContextDataPacket
-    epoch_time: str | None
+    timestamp_epoch: str | None
     state_letter: str | None
 
     # Estimated Data Packet Fields
