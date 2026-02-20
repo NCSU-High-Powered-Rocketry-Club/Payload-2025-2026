@@ -90,7 +90,7 @@ class Grave:
     High-level controller for the Grave deployment system.
     """
 
-    __slots__ = ("deployed", "lead_screw", "servo")
+    __slots__ = ("deployed", "lead_screw", "servo", "latch_state", "motor_extention")
 
     def __init__(self):
         self.servo = ServoDriver()
