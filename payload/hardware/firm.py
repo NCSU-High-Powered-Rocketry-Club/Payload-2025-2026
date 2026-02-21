@@ -33,4 +33,4 @@ class FIRM:
 
         :return: A list containing the latest FIRM data packets from the FIRM packet queue.
         """
-        return self.firm_client.get_data_packets()
+        return self.firm_client.get_data_packets(block=True)
