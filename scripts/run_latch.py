@@ -6,7 +6,7 @@ from gpiozero.pins.pigpio import PiGPIOFactory
 # --------------------
 # GPIO SETUP
 # --------------------
-SERVO_PIN = 18     # GPIO pin connected to servo signal
+SERVO_PIN = 24     # GPIO pin connected to servo signal
 
 # GPIOZero docs recommend using the pigpio daemon to improve
 # PWM precision.

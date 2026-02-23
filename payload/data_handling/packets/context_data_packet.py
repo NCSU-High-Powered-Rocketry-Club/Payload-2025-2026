@@ -34,3 +34,10 @@ class ContextDataPacket(msgspec.Struct, tag=True, array_like=True):
     This is used to compare the time difference between what is reported by the IMU, and when we
     finished processing the data packet.
     """
+
+    epoch_time: str
+    """
+    The Epoch Time stamp reported by the Raspberry Pi at the time the data packet was processed
+
+    This is used for NASA reporting as they require timestamps for all Payload Operations
+    """

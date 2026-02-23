@@ -10,7 +10,7 @@ import threading
 
 from payload.constants import (
     GRAVE_DEPLOY_LENGTH_SECONDS,
-    LAUNCH_ALTITUDE_METERS,
+    LAUNCH_ACCELERATION_GS,
     LAUNCH_STATE_LENGTH_SECONDS,
 )
 
@@ -63,11 +63,18 @@ class StandbyState(State):
         """
         Checks if the rocket has launched, based on our altitude.
         """
-        # If we go above 200 meters, we have launched. This is a very delayed, but very safe check.
+        # If accelerate above 5Gs, we have launched. This is a very delayed, but very safe check.
         if (
             self.context.most_recent_firm_data_packet
-            and self.context.most_recent_firm_data_packet.est_position_z_meters
-            > LAUNCH_ALTITUDE_METERS
+            and (
+                (
+                    (self.context.most_recent_firm_data_packet.raw_acceleration_z_gs**2)
+                    + (self.context.most_recent_firm_data_packet.raw_acceleration_y_gs**2)
+                    + (self.context.most_recent_firm_data_packet.raw_acceleration_x_gs**2)
+                )
+                ** 0.5
+            )
+            > LAUNCH_ACCELERATION_GS
         ):
             self.next_state()
 
@@ -179,7 +186,7 @@ class ZombieDeployedState(State):
 
 class ZombieDrillingState(State):
     """
-    When the rocket has stood the zombie chute up.
+    When the rocket has stood the zombie lander up.
     """
 
     __slots__ = ("drill_thread",)

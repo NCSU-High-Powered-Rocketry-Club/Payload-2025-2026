@@ -24,6 +24,7 @@ def run_grave():
     """Runs the code for Grave."""
     firm, logger = create_components()
     grave = Grave()
+
     run_flight_loop(Context(grave=grave, zombie=None, firm=firm, logger=logger))
 
 
