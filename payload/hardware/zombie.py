@@ -2,12 +2,17 @@
 
 import asyncio
 import threading
+import time
 
 from gpiozero import Device, Servo
 from gpiozero.pins.pigpio import PiGPIOFactory
 
 from payload import constants
 from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket
+
+from pymodbus.client import ModbusSerialClient
+
+from payload.hardware.soil_sensor import SoilSensor
 
 # GPIOZero docs recommend using the pigpio daemon to improve
 # PWM precision.
@@ -34,11 +39,13 @@ class Zombie:
 
         # Define our motor and lift objects. Since both communicate over standard
         # RC PWM, we use gpiozero.Servo objects to represent them.
+        # Drill motor
         self._motor = Servo(
             constants.DRILL_MOTOR_PIN,
             initial_value=0,
         )
 
+        # Rack and pinion 
         self._lift = Servo(
             constants.LIFT_SERVO_PIN,
             initial_value=constants.LIFT_UP_POSITION,
@@ -46,6 +53,13 @@ class Zombie:
             min_pulse_width=(constants.LIFT_SERVO_MIN_PULSE / 1000.0) / 1000.0,
             max_pulse_width=(constants.LIFT_SERVO_MAX_PULSE / 1000.0) / 1000.0,
         )
+
+        # Soil sensor initialization
+        self.soil_sensor = SoilSensor()
+        self.soil_packet = ZombieDataPacket(-1,-1,-1,-1,-1,-1,-1)
+
+         # A flag to mark when sampling is completed
+        self.sampling_complete = False
 
     def deploy_legs(self) -> None:
         """
@@ -61,6 +75,15 @@ class Zombie:
             target=asyncio.run, args=(self.run_drilling_sequence(),), daemon=True
         )
         self.drill_thread.start()
+
+    def start_soil_sampling(self) -> None:
+        """i dont care"""
+        self.soil_sample_thread = threading.Thread(
+            target=asyncio.run, 
+            args=(self.run_soil_sensor(),), 
+            daemon=True
+        )
+        self.soil_sample_thread.start()
 
     async def run_drilling_sequence(self) -> None:
         """
@@ -100,10 +123,19 @@ class Zombie:
 
         self.drilling_complete = True
 
-    def start_soil_sensor(self) -> None:
-        """
-        Starts the soil sensor of the zombie.
-        """
+    async def run_soil_sensor(self) -> None:
+        """potato"""
+        start_time = time.time()
+
+        while (True):
+            self.soil_packet = self.soil_sensor.readAll()
+            await asyncio.sleep(constants.SOIL_SENSOR_READ_INTERVAL_SECONDS)
+            
+            if (time.time() - start_time) > constants.SOIL_SENSOR_TIME:
+                break
+        
+        self.sampling_complete = True
+
 
     def get_soil_data(self):
         """ """
@@ -112,4 +144,4 @@ class Zombie:
 
     def get_data_packet(self):
         """ """
-        return ZombieDataPacket(soil_info=self.get_soil_data())
+        # return ZombieDataPacket(soil_info=self.get_soil_data())

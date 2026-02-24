@@ -210,7 +210,27 @@ class ZombieDrillingState(State):
             self.next_state()
 
     def next_state(self) -> None:
-        pass
+        self.context.state = ZombieSampleCollectingState(self.context)
+
+class ZombieSampleCollectingState(State):
+    """
+    Once a soil sample has been collected and needs to be analyzed.
+    """
+
+    __slots__ = ()
+    
+    def __init__(self, context):
+        super().__init__(context)
+        self.context.zombie.start_soil_sampling()
+
+    def update(self) -> None:
+        if self.context.zombie.sampling_complete:
+            self.next_state()
+
+    def next_state(self) -> None:
+        # Zombie has no next state, so we explicitly do nothing.
+        self.context.state = ZombieSampleCollectedState(self.context)
+
 
 
 class ZombieSampleCollectedState(State):

@@ -51,6 +51,11 @@ DRILL_TIME = 6.0
 # Time to wait for the lift to come back up and deposit our soil inside.
 RETRACTION_TIME = 7.0
 
+# bla
+SOIL_SENSOR_READ_INTERVAL_SECONDS = 0.25
+
+SOIL_SENSOR_TIME = 10
+
 # ------------------------ Grave constants------------------------
 
 
