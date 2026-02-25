@@ -7,6 +7,7 @@
 import time
 import board
 from digitalio import DigitalInOut, Direction
+from gpiozero import OutputDevice
 
 DELAY = 0.02
 DISTANCE = 50 #mm
@@ -17,9 +18,9 @@ STEPS = int(DISTANCE / 0.01)
 # the following code to use your chosen pins.
 
 # direction and step pins as outputs
-DIR = DigitalInOut(board.D23)
+DIR = DigitalInOut(board.D24)
 DIR.direction = Direction.OUTPUT
-STEP = DigitalInOut(board.D24)
+STEP = DigitalInOut(board.D23)
 STEP.direction = Direction.OUTPUT
 
 # microstep mode, default is 1/16 so 16
@@ -27,6 +28,14 @@ STEP.direction = Direction.OUTPUT
 microMode = 16
 # full rotation multiplied by the microstep divider
 steps = STEPS * microMode
+
+motor_sleep = OutputDevice(22)
+
+motor_sleep.off()
+print("Motor Sleeping")
+time.sleep(5)
+motor_sleep.on()
+print("Motor on")
 
 DIR.value = not DIR.value
 while True:
