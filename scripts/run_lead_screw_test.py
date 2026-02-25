@@ -30,23 +30,29 @@ microMode = 16
 steps = STEPS * microMode
 
 motor_sleep = OutputDevice(22)
+try:
+    motor_sleep.off()
+    print("Motor Sleeping")
+    time.sleep(5)
+    motor_sleep.on()
+    print("Motor on")
 
-motor_sleep.off()
-print("Motor Sleeping")
-time.sleep(5)
-motor_sleep.on()
-print("Motor on")
-
-DIR.value = not DIR.value
-while True:
-    # change direction every loop
     DIR.value = not DIR.value
-    # toggle STEP pin to move the motor
-    for i in range(steps):
-        STEP.value = True
-        time.sleep(0.002)
-        STEP.value = False
-        time.sleep(0.002)
-    print("rotated! now reverse")
-    # 1 second delay before starting again
-    time.sleep(1)
+    while True:
+        # change direction every loop
+        DIR.value = not DIR.value
+        # toggle STEP pin to move the motor
+        for i in range(steps):
+            STEP.value = True
+            time.sleep(0.002)
+            STEP.value = False
+            time.sleep(0.002)
+        print("rotated! now reverse")
+        # 1 second delay before starting again
+        time.sleep(1)
+except KeyboardInterrupt:
+    print("\nProgram Interrupted by User.")
+    
+finally:
+    motor_sleep.off()
+    print("Stepper Motor disengaged. Board Sleeping.")
