@@ -144,19 +144,17 @@ class DeployZombieState(State):
     This state runs on GRAVE and deploys zombie. After that, it does nothing.
     """
 
-    __slots__ = ("_deploy_started",)
 
     def __init__(self, context: Context) -> None:
         super().__init__(context)
-        self._deploy_started = False
+        self.context.deploy_zombie()
 
     def update(self) -> None:
         """
         Deploys Zombie from the rocket.
         """
-        if not self._deploy_started:
-            self.context.deploy_zombie()
-            self._deploy_started = True
+        if (self.context.grave.deployed):
+            self.next_state()
 
     def next_state(self) -> None:
         # Grave has no next state, so we explicitly do nothing

@@ -1,5 +1,6 @@
 """This is Grave, the part of payload that ejects Zombie."""
 
+import threading
 import time
 
 # Lead screw imports
@@ -111,11 +112,16 @@ class Grave:
         pass
 
     def deploy_zombie(self):
+        self.deploy_thread = threading.Thread(target=self.run_deploy_sequence, daemon=True)
+        self.deploy_thread.start()
+
+    def run_deploy_sequence(self):
         self.servo.release_latch()
         self.latch_state = 1
         time.sleep(2)
         self.motor_extention = 1
         self.lead_screw.extend(50)  # mm
+        self.deployed = True 
 
     def get_motor_extension(self):
         return self.motor_extention
