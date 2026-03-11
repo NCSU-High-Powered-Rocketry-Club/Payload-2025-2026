@@ -8,7 +8,6 @@ dependencies = [
     "gpiozero>=2.0.1",
     "msgspec>=0.20.0",
     "pigpio>=1.78",
-    "pymodbus>=3.12.1",
 ]
 
 [project.scripts]
