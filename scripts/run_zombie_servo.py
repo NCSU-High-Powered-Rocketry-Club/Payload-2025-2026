@@ -3,7 +3,7 @@ from gpiozero import Servo
 from gpiozero.pins.pigpio import PiGPIOFactory
 from gpiozero.devices import Device
 
-class INJORAServo:
+class INJORAServoDriver:
     """
     Controller for the INJORA 35KG Digital Servo (360° Continuous Rotation).
     
