@@ -79,7 +79,7 @@ class LeadScrewDriver:
         STEPS = int(distance_mm / 0.01)
         microMode = 16
         steps = STEPS * microMode
-        self.dir.value = (direction == "extend")
+        self.dir.value = (direction == "retract")
 
         self.wake()  # Wake before stepping
 
