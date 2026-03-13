@@ -56,20 +56,32 @@ class ServoDriver:
 
 class LeadScrewDriver:
     """Driver for the lead screw."""
-# Pins should be 27 and 22
-    def __init__(self, dir_pin=board.D27, step_pin=board.D22):
+    # Pins should be 27, 22, and 17 (or whichever GPIO you wire SLEEP to)
+    def __init__(self, dir_pin=board.D27, step_pin=board.D22, slp_pin=board.D17):
         self.dir = DigitalInOut(dir_pin)
         self.dir.direction = Direction.OUTPUT
 
         self.step = DigitalInOut(step_pin)
         self.step.direction = Direction.OUTPUT
 
-    def extend(self, distance_mm):
+        self.slp = DigitalInOut(slp_pin)
+        self.slp.direction = Direction.OUTPUT
+        self.slp.value = False  # Start in sleep mode — LOW = sleeping on A4988
+
+    def wake(self):
+        self.slp.value = True
+        time.sleep(0.001)  # A4988 needs ~1ms to wake before stepping
+
+    def sleep(self):
+        self.slp.value = False
+
+    def move(self, distance_mm, direction="extend"):
         STEPS = int(distance_mm / 0.01)
         microMode = 16
         steps = STEPS * microMode
+        self.dir.value = (direction == "extend")
 
-        self.dir.value = True  # Set direction to extend
+        self.wake()  # Wake before stepping
 
         for _ in range(steps):
             self.step.value = True
@@ -78,7 +90,7 @@ class LeadScrewDriver:
             time.sleep(0.00002)
 
         time.sleep(1)
-
+        self.sleep()  # Return to sleep after move completes
 
 # =========================
 # Grave High-Level Controller
@@ -115,7 +127,9 @@ class Grave:
         self.latch_state = 1
         time.sleep(2)
         self.motor_extention = 1
-        self.lead_screw.extend(200)  # mm
+        self.lead_screw.move(470, direction="extend")  # mm
+        time.sleep(5)
+        self.lead_screw.move(80, direction="retract")  # mm
 
     def get_motor_extension(self):
         return self.motor_extention

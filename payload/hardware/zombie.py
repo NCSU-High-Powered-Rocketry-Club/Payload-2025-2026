@@ -21,7 +21,7 @@ class Zombie:
         """
         try:
             servo = INJORAServoDriver(pin=23)
-            print("Spinning forward at full speed for 3 seconds...")
+            print("Spinning forward at full speed for 10 seconds...")
             servo.spin_forward(duration=10, speed=1.0)
         finally:
             servo.stop()
