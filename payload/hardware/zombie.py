@@ -20,7 +20,7 @@ class Zombie:
         Deploys the legs of the zombie to stand it up.
         """
         try:
-            servo = INJORAServoDriver(pin=23)
+            servo = INJORAServoDriver(pin=12)
             print("Spinning forward at full speed for 10 seconds...")
             servo.spin_forward(duration=10, speed=1.0)
         finally:
@@ -74,7 +74,7 @@ class INJORAServoDriver:
     gpiozero Servo maps: value=-1 → min_pulse, value=0 → mid, value=1 → max_pulse
     """
 
-    def __init__(self, pin=23, min_pwm_signal=0.001, max_pwm_signal=0.002):
+    def __init__(self, pin=12, min_pwm_signal=0.001, max_pwm_signal=0.002):
         Device.pin_factory = PiGPIOFactory()
         self.servo = Servo(
             pin,
