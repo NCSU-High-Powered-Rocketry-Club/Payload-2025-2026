@@ -71,19 +71,19 @@ class LeadScrewDriver:
 
         self.dir.value = False  # Set direction to extend
 
-        for _ in range(int(steps / 5)):
+        for _ in range(int(steps / 10)):
             self.step.value = True
-            time.sleep(0.002)
+            time.sleep(0.0001)
             self.step.value = False
-            time.sleep(0.002)
+            time.sleep(0.0001)
 
         time.sleep(1)
         
-        for _ in range(int(4 * steps / 5)):
+        for _ in range(int(9 * steps / 10)):
             self.step.value = True
-            time.sleep(0.0005)
+            time.sleep(0.00005)
             self.step.value = False
-            time.sleep(0.0005)
+            time.sleep(0.00005)
 
         time.sleep(1)
 
