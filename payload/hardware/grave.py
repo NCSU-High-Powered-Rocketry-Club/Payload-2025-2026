@@ -69,13 +69,21 @@ class LeadScrewDriver:
         microMode = 16
         steps = STEPS * microMode
 
-        self.dir.value = True  # Set direction to extend
+        self.dir.value = False  # Set direction to extend
 
-        for _ in range(steps):
+        for _ in range(int(steps / 5)):
             self.step.value = True
-            time.sleep(0.00002)
+            time.sleep(0.0005)
             self.step.value = False
-            time.sleep(0.00002)
+            time.sleep(0.0005)
+
+        time.sleep(1)
+
+        for _ in range(int(steps / 5)):
+            self.step.value = True
+            time.sleep(0.00001)
+            self.step.value = False
+            time.sleep(0.00001)
 
         time.sleep(1)
 
@@ -115,7 +123,7 @@ class Grave:
         self.latch_state = 1
         time.sleep(2)
         self.motor_extention = 1
-        self.lead_screw.extend(200)  # mm
+        self.lead_screw.extend(500)  # mm
 
     def get_motor_extension(self):
         return self.motor_extention
