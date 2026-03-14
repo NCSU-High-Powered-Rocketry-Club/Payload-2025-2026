@@ -1,0 +1,1 @@
+mkdir launch_vids && rpicam-vid -t $((50*60*1000)) --inline -o launch_vids/launch_$(date +"%Y%m%d_%H%M%S").h264 --flush --awb auto --width 1920 --height 1080
