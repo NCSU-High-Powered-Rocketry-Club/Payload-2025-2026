@@ -15,8 +15,11 @@ from payload.data_handling.packets.grave_data_packet import GraveDataPacket
 
 class ServoDriver:
     """Driver for the latch servo."""
- # Pin should be 24
-    def __init__(self, pin=24, min_angle=0, max_angle=198, min_pwm_signal=0.00075, max_pwm_signal=0.00225):
+
+    # Pin should be 24
+    def __init__(
+        self, pin=24, min_angle=0, max_angle=198, min_pwm_signal=0.00075, max_pwm_signal=0.00225
+    ):
         Device.pin_factory = PiGPIOFactory()
 
         self.servo = AngularServo(
@@ -56,6 +59,7 @@ class ServoDriver:
 
 class LeadScrewDriver:
     """Driver for the lead screw."""
+
     # Pins should be 27, 22, and 17 (or whichever GPIO you wire SLEEP to)
     def __init__(self, dir_pin=board.D27, step_pin=board.D22, slp_pin=board.D17):
         self.dir = DigitalInOut(dir_pin)
@@ -79,7 +83,7 @@ class LeadScrewDriver:
         STEPS = int(distance_mm / 0.01)
         microMode = 16
         steps = STEPS * microMode
-        self.dir.value = (direction == "retract")
+        self.dir.value = direction == "retract"
 
         self.wake()  # Wake before stepping
 
@@ -92,6 +96,7 @@ class LeadScrewDriver:
         time.sleep(1)
         self.sleep()  # Return to sleep after move completes
 
+
 # =========================
 # Grave High-Level Controller
 # =========================
@@ -102,7 +107,7 @@ class Grave:
     High-level controller for the Grave deployment system.
     """
 
-    __slots__ = ("deployed", "lead_screw", "servo", "latch_state", "motor_extention")
+    __slots__ = ("deployed", "latch_state", "lead_screw", "motor_extention", "servo")
 
     def __init__(self):
         self.servo = ServoDriver()

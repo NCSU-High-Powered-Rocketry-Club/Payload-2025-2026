@@ -1,10 +1,12 @@
 """This is Zombie, the part of payload that drills and analyzes soil."""
 
-from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket
 import time
+
 from gpiozero import Servo
-from gpiozero.pins.pigpio import PiGPIOFactory
 from gpiozero.devices import Device
+from gpiozero.pins.pigpio import PiGPIOFactory
+
+from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket
 
 
 class Zombie:
@@ -21,11 +23,9 @@ class Zombie:
         """
         try:
             servo = INJORAServoDriver(pin=12)
-            print("Spinning forward at full speed for 10 seconds...")
             servo.spin_forward(duration=10, speed=1.0)
         finally:
             servo.stop()
-            pass
 
     def start_drilling(self) -> None:
         """
@@ -63,13 +63,12 @@ class Zombie:
     def get_data_packet(self):
         """Get the data packet for zombie. This will involve firm data and soil sensor data."""
         return ZombieDataPacket(soil_info=self.get_soil_data())
-        
 
 
 class INJORAServoDriver:
     """
     Controller for the INJORA 35KG Digital Servo (360° Continuous Rotation).
-    
+
     PWM spec: 1000µs (full reverse) / 1500µs (stop) / 2000µs (full forward)
     gpiozero Servo maps: value=-1 → min_pulse, value=0 → mid, value=1 → max_pulse
     """
