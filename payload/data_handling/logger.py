@@ -137,7 +137,8 @@ class Logger:
         # Convert the imu data packets to a LoggerDataPacket:
         for firm_data_packet in firm_data_packets:
             logger_packet = LoggerDataPacket(
-                state_letter=context_data_packet.state.__name__[0],
+                timestamp_epoch=context_data_packet.epoch_time,
+                state_letter=context_data_packet.state.__name__,
                 timestamp_seconds=firm_data_packet.timestamp_seconds,
             )
 
@@ -192,6 +193,7 @@ class Logger:
             )
             logger_packet.temperature_celsius = firm_data_packet.temperature_celsius
             logger_packet.position = grave_data_packet.position
+            logger_packet.latch = grave_data_packet.latch
             logger_packet.soil_info = zombie_data_packet.soil_info
             logger_data_packets.append(logger_packet)
 

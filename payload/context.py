@@ -1,7 +1,9 @@
 """The context for the payload state machine."""
 
 import time
+from datetime import datetime
 from typing import TYPE_CHECKING
+from zoneinfo import ZoneInfo
 
 from payload.data_handling.packets.context_data_packet import ContextDataPacket
 from payload.data_handling.packets.grave_data_packet import GraveDataPacket
@@ -102,6 +104,7 @@ class Context:
             state=type(self.state),
             retrieved_firm_packets=len(self.firm_data_packets),
             update_timestamp_ns=int(time.time_ns()),
+            epoch_time=datetime.now(ZoneInfo("America/New_York")).strftime("%H:%M:%S"),
         )
 
         if self.grave:

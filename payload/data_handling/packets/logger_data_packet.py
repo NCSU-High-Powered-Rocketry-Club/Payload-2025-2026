@@ -14,6 +14,7 @@ class LoggerDataPacket(msgspec.Struct, array_like=True, kw_only=True):
     """
 
     # Fields derived from ContextDataPacket
+    timestamp_epoch: str | None
     state_letter: str | None
 
     # Estimated Data Packet Fields
@@ -47,7 +48,8 @@ class LoggerDataPacket(msgspec.Struct, array_like=True, kw_only=True):
     timestamp_seconds: float | None = None
 
     # Grave packets
-    position: None = None
+    position: int | None = None
+    latch: int | None = None
 
     # Zombie packets
     soil_info: None = None

@@ -16,13 +16,22 @@ from payload.data_handling.packets.grave_data_packet import GraveDataPacket
 class ServoDriver:
     """Driver for the latch servo."""
 
-    def __init__(self, pin=24, min_angle=0, max_angle=30):
+    # Pin should be 24
+    def __init__(
+        self, pin=24, min_angle=0, max_angle=198, min_pwm_signal=0.00075, max_pwm_signal=0.00225
+    ):
         Device.pin_factory = PiGPIOFactory()
 
-        self.servo = AngularServo(pin, min_angle=min_angle, max_angle=max_angle)
+        self.servo = AngularServo(
+            pin,
+            min_angle=min_angle,
+            max_angle=max_angle,
+            min_pulse_width=min_pwm_signal,
+            max_pulse_width=max_pwm_signal,
+        )
 
-        self.start_angle = min_angle
-        self.deploy_angle = (min_angle + max_angle) / 2
+        self.start_angle = max_angle - 1
+        self.deploy_angle = max_angle - 40
         self.max_angle = max_angle
 
     def release_latch(self):
@@ -51,27 +60,41 @@ class ServoDriver:
 class LeadScrewDriver:
     """Driver for the lead screw."""
 
-    def __init__(self, dir_pin=board.D27, step_pin=board.D22):
+    # Pins should be 27, 22, and 17 (or whichever GPIO you wire SLEEP to)
+    def __init__(self, dir_pin=board.D27, step_pin=board.D22, slp_pin=board.D17):
         self.dir = DigitalInOut(dir_pin)
         self.dir.direction = Direction.OUTPUT
 
         self.step = DigitalInOut(step_pin)
         self.step.direction = Direction.OUTPUT
 
-    def extend(self, distance_mm):
+        self.slp = DigitalInOut(slp_pin)
+        self.slp.direction = Direction.OUTPUT
+        self.slp.value = False  # Start in sleep mode — LOW = sleeping on A4988
+
+    def wake(self):
+        self.slp.value = True
+        time.sleep(0.001)  # A4988 needs ~1ms to wake before stepping
+
+    def sleep(self):
+        self.slp.value = False
+
+    def move(self, distance_mm, direction="extend"):
         STEPS = int(distance_mm / 0.01)
         microMode = 16
         steps = STEPS * microMode
+        self.dir.value = direction == "retract"
 
-        self.dir.value = True  # Set direction to extend
+        self.wake()  # Wake before stepping
 
         for _ in range(steps):
             self.step.value = True
-            time.sleep(0.0005)
+            time.sleep(0.00002)
             self.step.value = False
-            time.sleep(0.0005)
+            time.sleep(0.00002)
 
         time.sleep(1)
+        self.sleep()  # Return to sleep after move completes
 
 
 # =========================
@@ -84,12 +107,14 @@ class Grave:
     High-level controller for the Grave deployment system.
     """
 
-    __slots__ = ("deployed", "lead_screw", "servo")
+    __slots__ = ("deployed", "latch_state", "lead_screw", "motor_extention", "servo")
 
     def __init__(self):
         self.servo = ServoDriver()
         self.lead_screw = LeadScrewDriver()
         self.deployed = False
+        self.latch_state = 0
+        self.motor_extention = 0
 
     def start(self):
         pass
@@ -104,10 +129,18 @@ class Grave:
 
     def deploy_zombie(self):
         self.servo.release_latch()
-        self.lead_screw.extend(50)  # mm
+        self.latch_state = 1
+        time.sleep(2)
+        self.motor_extention = 1
+        self.lead_screw.move(470, direction="extend")  # mm
+        time.sleep(5)
+        self.lead_screw.move(80, direction="retract")  # mm
 
     def get_motor_extension(self):
-        return 0
+        return self.motor_extention
+
+    def get_latch_state(self):
+        return self.latch_state
 
     def get_data_packet(self):
-        return GraveDataPacket(position=self.get_motor_extension())
+        return GraveDataPacket(position=self.get_motor_extension(), latch=self.get_latch_state())
