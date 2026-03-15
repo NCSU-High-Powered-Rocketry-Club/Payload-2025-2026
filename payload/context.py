@@ -114,4 +114,4 @@ class Context:
 
         if self.zombie:
             self.zombie_data_packet = self.zombie.get_data_packet()
-            self.grave_data_packet = GraveDataPacket(0)
+            self.grave_data_packet = GraveDataPacket(0, 0)

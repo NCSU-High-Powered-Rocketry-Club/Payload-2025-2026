@@ -10,6 +10,7 @@ from digitalio import DigitalInOut, Direction
 from gpiozero import AngularServo, Device
 from gpiozero.pins.pigpio import PiGPIOFactory
 
+from payload.base_classes.base_grave import BaseGrave
 from payload.data_handling.packets.grave_data_packet import GraveDataPacket
 
 
@@ -102,7 +103,7 @@ class LeadScrewDriver:
 # =========================
 
 
-class Grave:
+class Grave(BaseGrave):
     """
     High-level controller for the Grave deployment system.
     """
@@ -116,6 +117,7 @@ class Grave:
         self.latch_state = 0
         self.motor_extention = 0
 
+    # TODO: use these when giving grave its own thread
     def start(self):
         pass
 
@@ -136,11 +138,5 @@ class Grave:
         time.sleep(5)
         self.lead_screw.move(80, direction="retract")  # mm
 
-    def get_motor_extension(self):
-        return self.motor_extention
-
-    def get_latch_state(self):
-        return self.latch_state
-
     def get_data_packet(self):
-        return GraveDataPacket(position=self.get_motor_extension(), latch=self.get_latch_state())
+        return GraveDataPacket(position=self.motor_extention, latch=self.latch_state)

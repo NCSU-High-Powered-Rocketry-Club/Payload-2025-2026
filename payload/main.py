@@ -8,7 +8,6 @@ from payload.constants import LOGS_PATH
 from payload.context import Context
 from payload.data_handling.logger import Logger
 from payload.hardware.firm import FIRM
-from payload.hardware.grave import Grave
 from payload.hardware.zombie import Zombie
 from payload.mock.mock_firm import MockFIRM
 from payload.utils import arg_parser
@@ -34,6 +33,18 @@ def create_firm_from_args(args):
     raise ValueError(f"Unknown mode: {args.mode}")
 
 
+def create_grave_from_args(args):
+    if args.mode == "real":
+        from payload.hardware.grave import Grave  # noqa: PLC0415
+        return Grave()
+
+    if args.mode in {"mock", "pretend"}:
+        from payload.mock.mock_grave import MockGrave  # noqa: PLC0415
+        return MockGrave()
+
+    raise ValueError(f"Unknown mode: {args.mode}")
+
+
 def create_components(args):
     """Creates the system components needed for the payload system."""
     firm = create_firm_from_args(args)
@@ -47,7 +58,7 @@ def run_payload(*, use_grave: bool, use_zombie: bool):
 
     firm, logger = create_components(args)
 
-    grave = Grave() if use_grave else None
+    grave = create_grave_from_args(args) if use_grave else None
     zombie = Zombie() if use_zombie else None
 
     context = Context(
