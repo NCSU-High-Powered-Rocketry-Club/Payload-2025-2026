@@ -8,6 +8,7 @@ dependencies = [
     "gpiozero>=2.0.1",
     "msgspec>=0.20.0",
     "pigpio>=1.78",
+    "polars",
 ]
 
 [project.scripts]

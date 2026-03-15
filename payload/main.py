@@ -10,29 +10,64 @@ from payload.data_handling.logger import Logger
 from payload.hardware.firm import FIRM
 from payload.hardware.grave import Grave
 from payload.hardware.zombie import Zombie
+from payload.mock.mock_firm import MockFIRM
+from payload.utils import arg_parser
 
 
-# TODO: eventually add more stuff here like the logger
-def create_components() -> tuple[FIRM, Logger]:
+def create_firm_from_args(args):
+    """Create the correct FIRM implementation based on CLI args."""
+    if args.mode == "real":
+        return FIRM()
+
+    if args.mode == "mock":
+        return MockFIRM(
+            real_time_replay=not args.fast_replay,
+            log_file_path=args.path,
+        )
+
+    if args.mode == "pretend":
+        return FIRM(
+            is_pretend=True,
+            log_file_path=args.path,
+        )
+
+    raise ValueError(f"Unknown mode: {args.mode}")
+
+
+def create_components(args):
     """Creates the system components needed for the payload system."""
-    firm = FIRM()
+    firm = create_firm_from_args(args)
     logger = Logger(LOGS_PATH)
     return firm, logger
 
 
+def run_payload(*, use_grave: bool, use_zombie: bool):
+    """Shared runner for Grave/Zombie."""
+    args = arg_parser()
+
+    firm, logger = create_components(args)
+
+    grave = Grave() if use_grave else None
+    zombie = Zombie() if use_zombie else None
+
+    context = Context(
+        grave=grave,
+        zombie=zombie,
+        firm=firm,
+        logger=logger,
+    )
+
+    run_flight_loop(context)
+
+
 def run_grave():
     """Runs the code for Grave."""
-    firm, logger = create_components()
-    grave = Grave()
-
-    run_flight_loop(Context(grave=grave, zombie=None, firm=firm, logger=logger))
+    run_payload(use_grave=True, use_zombie=False)
 
 
 def run_zombie():
     """Runs the code for Zombie."""
-    firm, logger = create_components()
-    zombie = Zombie()
-    run_flight_loop(Context(grave=None, zombie=zombie, firm=firm, logger=logger))
+    run_payload(use_grave=False, use_zombie=True)
 
 
 def run_flight_loop(context: Context):
@@ -42,7 +77,6 @@ def run_flight_loop(context: Context):
         while True:
             context.update()
     except KeyboardInterrupt:
-        # Maybe do stuff here eventually
         pass
     finally:
         context.stop()

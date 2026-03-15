@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from zoneinfo import ZoneInfo
 
+from payload.base_classes.base_firm import BaseFIRM
 from payload.data_handling.packets.context_data_packet import ContextDataPacket
 from payload.data_handling.packets.grave_data_packet import GraveDataPacket
 from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket
@@ -46,7 +47,7 @@ class Context:
     )
 
     def __init__(
-        self, grave: Grave | None, zombie: Zombie | None, firm: FIRM, logger: Logger
+        self, grave: Grave | None, zombie: Zombie | None, firm: BaseFIRM, logger: Logger
     ) -> None:
         self.grave = grave
         self.zombie = zombie

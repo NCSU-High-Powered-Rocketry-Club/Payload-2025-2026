@@ -1,5 +1,5 @@
 """The constants for the payload."""
-
+from enum import StrEnum
 from pathlib import Path
 
 # ------------------------ FIRM constants ------------------------
@@ -35,3 +35,15 @@ STOP_SIGNAL = "STOP"
 The signal to stop the IMU, Logger, and ApogeePredictor thread, this will be put in the queue to
 stop the threads.
 """
+
+# ------------------------ Display Configuration ------------------------
+
+class DisplayEndingType(StrEnum):
+    """Enum that represents the different ways the display can end."""
+
+    NATURAL = "natural"
+    """The display ends naturally, when the payload finishes, in a mock replay."""
+    INTERRUPTED = "interrupted"
+    """The display ends because the user interrupted the program."""
+    TAKEOFF = "takeoff"
+    """The display ends because the rocket took off, in a real launch."""
