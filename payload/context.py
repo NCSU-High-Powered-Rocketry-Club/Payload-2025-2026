@@ -5,7 +5,6 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from zoneinfo import ZoneInfo
 
-from payload.base_classes.base_firm import BaseFIRM
 from payload.data_handling.packets.context_data_packet import ContextDataPacket
 from payload.data_handling.packets.grave_data_packet import GraveDataPacket
 from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket
@@ -14,8 +13,8 @@ from payload.state import StandbyState
 if TYPE_CHECKING:
     from firm_client import FIRMDataPacket
 
+    from payload.base_classes.base_firm import BaseFIRM
     from payload.data_handling.logger import Logger
-    from payload.hardware.firm import FIRM
     from payload.hardware.grave import Grave
     from payload.hardware.zombie import Zombie
 

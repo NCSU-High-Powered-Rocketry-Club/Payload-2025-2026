@@ -2,10 +2,6 @@
 
 import time
 
-# Lead screw imports
-import board
-from digitalio import DigitalInOut, Direction
-
 # Servo imports
 from gpiozero import AngularServo, Device
 from gpiozero.pins.pigpio import PiGPIOFactory
@@ -61,8 +57,14 @@ class ServoDriver:
 class LeadScrewDriver:
     """Driver for the lead screw."""
 
-    # Pins should be 27, 22, and 17 (or whichever GPIO you wire SLEEP to)
-    def __init__(self, dir_pin=board.D27, step_pin=board.D22, slp_pin=board.D17):
+    def __init__(self, dir_pin=None, step_pin=None, slp_pin=None):
+        import board  # Only imported when real hardware is used
+        from digitalio import DigitalInOut, Direction
+
+        dir_pin = dir_pin or board.D27
+        step_pin = step_pin or board.D22
+        slp_pin = slp_pin or board.D17
+
         self.dir = DigitalInOut(dir_pin)
         self.dir.direction = Direction.OUTPUT
 
