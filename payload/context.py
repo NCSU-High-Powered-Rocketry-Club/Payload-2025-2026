@@ -115,3 +115,20 @@ class Context:
         if self.zombie:
             self.zombie_data_packet = self.zombie.get_data_packet()
             self.grave_data_packet = GraveDataPacket(0, 0)
+
+    def deploy_zombie_legs(self) -> None:
+        """Deploys zombie legs to stand it up. Only called if this is Zombie."""
+        self.zombie.deploy_legs()
+
+    def start_zombie_drilling(self) -> None:
+        """Starts the drilling mechanism. Only called if this is Zombie."""
+        self.zombie.start_drilling()
+        self.zombie.start_soil_sensor()
+
+    def stop_zombie_drilling(self) -> None:
+        """Stops the drilling mechanism. Only called if this is Zombie."""
+        self.zombie.stop_drilling()
+
+    def check_zombie_deployed(self) -> bool:
+        """Returns True if zombie legs are deployed and orientation is correct."""
+        return self.zombie.check_deployment() and self.zombie.check_orientation()

@@ -8,7 +8,6 @@ from payload.constants import LOGS_PATH
 from payload.context import Context
 from payload.data_handling.logger import Logger
 from payload.hardware.firm import FIRM
-from payload.hardware.zombie import Zombie
 from payload.mock.mock_firm import MockFIRM
 from payload.utils import arg_parser
 
@@ -44,6 +43,16 @@ def create_grave_from_args(args):
 
     raise ValueError(f"Unknown mode: {args.mode}")
 
+def create_zombie_from_args(args):
+    if args.mode == "real":
+        from payload.hardware.zombie import Zombie  # noqa: PLC0415
+        return Zombie()
+
+    if args.mode in {"mock", "pretend"}:
+        from payload.mock.mock_zombie import MockZombie  # noqa: PLC0415
+        return MockZombie()
+    raise ValueError(f"Unknown mode: {args.mode}")
+
 
 def create_components(args):
     """Creates the system components needed for the payload system."""
@@ -53,21 +62,16 @@ def create_components(args):
 
 
 def run_payload(*, use_grave: bool, use_zombie: bool):
-    """Shared runner for Grave/Zombie."""
     args = arg_parser()
-
     firm, logger = create_components(args)
-
     grave = create_grave_from_args(args) if use_grave else None
-    zombie = Zombie() if use_zombie else None
-
+    zombie = create_zombie_from_args(args) if use_zombie else None
     context = Context(
         grave=grave,
         zombie=zombie,
         firm=firm,
         logger=logger,
     )
-
     run_flight_loop(context)
 
 

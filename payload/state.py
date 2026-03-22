@@ -162,40 +162,45 @@ class DeployZombieState(State):
 
 
 class ZombieDeployedState(State):
-    """
-    When the rocket has deployed the zombie.
-    """
+    """When the zombie has been deployed, but has not yet started drilling."""
 
-    __slots__ = ()
+    __slots__ = ("_deploy_started",)
+
+    def __init__(self, context: Context) -> None:
+        super().__init__(context)
+        self._deploy_started = False
 
     def update(self) -> None:
-        """
-        Orients zombie to be standing up properly.
-        """
-        # TODO: call some method in context that moves the legs and stands zombie up
-        # TODO: write code to detect if zombie is oriented correctly and legs are deployed, then go
-        #  to next state
+        if not self._deploy_started:
+            self.context.deploy_zombie_legs()
+            self._deploy_started = True
+        elif self.context.check_zombie_deployed():
+            self.next_state()
 
     def next_state(self) -> None:
         self.context.state = ZombieDrillingState(self.context)
 
 
 class ZombieDrillingState(State):
-    """
-    When the rocket has stood the zombie lander up.
-    """
+    """When the zombie is drilling and collecting soil samples."""
 
-    __slots__ = ()
+    __slots__ = ("_drilling_started",)
+
+    def __init__(self, context: Context) -> None:
+        super().__init__(context)
+        self._drilling_started = False
 
     def update(self) -> None:
-        """
-        Drills to collect the soil sample.
-        """
-        # TODO: call some method in context to do the drilling
-        # TODO: write code to detect if the soil has been collected
+        if not self._drilling_started:
+            self.context.start_zombie_drilling()
+            self._drilling_started = True
+        # replace with a real "sample collected" check when ready
+        elif self.context.zombie.get_soil_data() is not None:
+            self.context.stop_zombie_drilling()
+            self.next_state()
 
     def next_state(self) -> None:
-        pass
+        self.context.state = ZombieSampleCollectedState(self.context)
 
 
 class ZombieSampleCollectedState(State):

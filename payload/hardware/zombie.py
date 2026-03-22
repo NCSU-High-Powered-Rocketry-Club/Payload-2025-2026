@@ -6,10 +6,11 @@ from gpiozero import Servo
 from gpiozero.devices import Device
 from gpiozero.pins.pigpio import PiGPIOFactory
 
+from payload.base_classes.base_zombie import BaseZombie
 from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket
 
 
-class Zombie:
+class Zombie(BaseZombie):
     """A class representing a zombie payload."""
 
     __slots__ = ("soil_data",)

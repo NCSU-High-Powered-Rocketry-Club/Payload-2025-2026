@@ -1,3 +1,5 @@
+"""Mock Grave code."""
+
 from payload.base_classes.base_grave import BaseGrave
 from payload.data_handling.packets.grave_data_packet import GraveDataPacket
 
