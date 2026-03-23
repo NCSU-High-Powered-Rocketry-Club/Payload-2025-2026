@@ -100,19 +100,23 @@ class FlightDisplay:
         This is most useful on real flights, where it is hard to see the
         display due to sunlight.
         """
-        has_large_velocity = False
-        imu_queue_backlog = False
+        has_large_acceleration = False
+        firm_queue_backlog = False
 
-        # If the absolute value of our velocity is large in standby state, we have a problem:
-        if abs(self._context.data_processor.vertical_velocity) > 2:
-            has_large_velocity = True
+        # If the absolute value of our acceleration is large in standby state, we have a problem:
+        if abs(((self._context.most_recent_firm_data_packet.raw_acceleration_z_gs**2)
+                + (self._context.most_recent_firm_data_packet.raw_acceleration_y_gs**2)
+                + (self._context.most_recent_firm_data_packet.raw_acceleration_x_gs**2)
+                )
+                ** 0.5) > 2.5:
+            has_large_acceleration = True
 
-        # If we have too many packets in one iteration, that means the IMU is producing data faster
+        # If we have too many packets in one iteration, that means Firm is producing data faster
         # # than we can consume it, which is a problem:
         if self._context.context_data_packet.retrieved_firm_packets > 30:
-            imu_queue_backlog = True
+            firm_queue_backlog = True
 
-        if has_large_velocity or imu_queue_backlog:
+        if has_large_acceleration or firm_queue_backlog:
             print("\a", end="")  # \a is the bell character, which makes a beep sound
 
     def update_display(self) -> None:
@@ -129,7 +133,7 @@ class FlightDisplay:
         # Wait till we processed a data packet. This is to prevent the display from updating
         # before we have any data to display.
         while not (
-            self._context.context_data_packet and self._context.data_processor._last_data_packet
+            self._context.context_data_packet and self._context.most_recent_firm_data_packet
         ):
             pass
 
