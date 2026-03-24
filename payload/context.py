@@ -44,6 +44,8 @@ class Context:
         "zombie",
         "zombie_data_packet",
         "launch_time_seconds",
+        "total_acceleration",
+        "max_acceleration",
     )
 
     def __init__(
@@ -64,6 +66,8 @@ class Context:
         self.grave_data_packet: GraveDataPacket | None = None
         self.zombie_data_packet: ZombieDataPacket | None = None
         self.launch_time_seconds: float = 0
+        self.total_acceleration: float = 0
+        self.max_acceleration: float = 0
 
     def start(self):
         self.firm.start()
@@ -83,6 +87,13 @@ class Context:
         self.most_recent_firm_data_packet = self.firm_data_packets[-1]
 
         self.state.update()
+
+        self.total_acceleration = ((self.most_recent_firm_data_packet.raw_acceleration_z_gs**2)
+                + (self.most_recent_firm_data_packet.raw_acceleration_y_gs**2)
+                + (self.most_recent_firm_data_packet.raw_acceleration_x_gs**2)
+                ) ** 0.5
+        
+        self.max_acceleration = max(self.total_acceleration, self.max_acceleration)
 
         self.generate_data_packets()
         # TODO: Maybe change the fields in the context data packet

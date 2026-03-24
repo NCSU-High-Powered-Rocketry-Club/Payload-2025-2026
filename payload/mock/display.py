@@ -175,6 +175,7 @@ class FlightDisplay:
             if self._context.launch_time_seconds
             else 0)
         )
+        
 
         # Prepare output
         output = [
@@ -183,16 +184,22 @@ class FlightDisplay:
             f"Time since replay start:      {C}{time.time() - self._start_time:<10.2f}{RESET} {R}s{RESET}",  # noqa: E501
             f"{Y}{'=' * 12} REAL TIME FLIGHT DATA {'=' * 12}{RESET}",
             # Format time as MM:SS:
+            f"Time (EST):                {G}{self._context.context_data_packet.epoch_time}{RESET}"
             f"Launch time:               {G}T+{time.strftime('%M:%S', time.gmtime(time_since_launch))}{RESET}",  # noqa: E501
             f"State:                     {G}{self._context.state.name:<15}{RESET}",
-            f"Current velocity:          {G}{data_processor.vertical_velocity:<10.2f}{RESET} {R}m/s{RESET}",  # noqa: E501
-            f"Max velocity so far:       {G}{data_processor.max_vertical_velocity:<10.2f}{RESET} {R}m/s{RESET}",  # noqa: E501
-            f"Current height:            {G}{data_processor.current_altitude:<10.2f}{RESET} {R}m{RESET}",  # noqa: E501
-            f"Max height so far:         {G}{data_processor.max_altitude:<10.2f}{RESET} {R}m{RESET}",  # noqa: E501
-            f"Predicted apogee:          {G}{self._context.most_recent_apogee_predictor_data_packet.predicted_apogee if self._context.most_recent_apogee_predictor_data_packet else 0:<10.2f}{RESET} {R}m{RESET}",  # noqa: E501
-            f"Airbrakes extension:       {G}{self._context.servo.current_extension.value:<10}{RESET} {R}deg{RESET}",  # noqa: E501
+            f"Total Acceleration:        {G}{self._context.total_acceleration:<10.2f}{RESET} {R}m/s^2{RESET}", # noqa: E501
+            f"Max Acceleration so far:   {G}{self._context.max_acceleration:<10.2f}{RESET} {R}m/s^2{RESET}", # noqa: E501
         ]
 
+
+        if self._context.grave is not None:
+            output.extend(
+                [
+                    f"Latch Status:              {G}{bool(self._context.grave_data_packet.latch):<10}{RESET}",
+                    f"Ejection Status:           {G}{bool(self._context.grave_data_packet.position):<10}{RESET}"
+                ]
+            )
+        
         # Adds additional info to the display if -v was specified
         if self._args.verbose:
             output.extend(
