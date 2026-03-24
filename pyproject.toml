@@ -9,6 +9,7 @@ dependencies = [
     "msgspec>=0.20.0",
     "pigpio>=1.78",
     "polars",
+    "tzdata"
 ]
 
 [project.scripts]

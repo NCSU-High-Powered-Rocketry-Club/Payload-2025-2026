@@ -4,7 +4,7 @@ from pathlib import Path
 
 # ------------------------ FIRM constants ------------------------
 
-PORT = "/dev/ttyACM0"
+PORT = "COM9" #/dev/ttyACM0"
 BAUD_RATE = 2_000_000
 SERIAL_TIMEOUT_SECONDS = 1.0
 
