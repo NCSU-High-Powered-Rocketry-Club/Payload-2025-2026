@@ -65,7 +65,7 @@ class Context:
         self.context_data_packet: ContextDataPacket | None = None
         self.grave_data_packet: GraveDataPacket | None = None
         self.zombie_data_packet: ZombieDataPacket | None = None
-        self.launch_time_seconds: float = 0
+        self.launch_time_seconds: int = 0
         self.total_acceleration: float = 0
         self.max_acceleration: float = 0
 

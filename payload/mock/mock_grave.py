@@ -1,4 +1,5 @@
 """Mock Grave code."""
+import time
 
 from payload.base_classes.base_grave import BaseGrave
 from payload.data_handling.packets.grave_data_packet import GraveDataPacket
@@ -29,6 +30,7 @@ class MockGrave(BaseGrave):
 
     def deploy_zombie(self):
         self.latch_state = 1
+        time.sleep(2)
         self.motor_extension = 1
 
     def get_data_packet(self):

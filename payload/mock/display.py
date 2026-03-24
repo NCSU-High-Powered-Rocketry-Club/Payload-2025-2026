@@ -185,8 +185,8 @@ class FlightDisplay:
             f"Time (EST):                {G}{self._context.context_data_packet.epoch_time}{RESET}",
             f"Launch time:               {G}T+{time.strftime('%M:%S', time.gmtime(time_since_launch))}{RESET}",  # noqa: E501
             f"State:                     {G}{self._context.state.name:<15}{RESET}",
-            f"Total Acceleration:        {G}{self._context.total_acceleration:<10.2f}{RESET} {R}m/s^2{RESET}", # noqa: E501
-            f"Max Acceleration so far:   {G}{self._context.max_acceleration:<10.2f}{RESET} {R}m/s^2{RESET}", # noqa: E501
+            f"Total Acceleration:        {G}{self._context.total_acceleration:<10.2f}{RESET} {R}G{RESET}", # noqa: E501
+            f"Max Acceleration so far:   {G}{self._context.max_acceleration:<10.2f}{RESET} {R}G{RESET}", # noqa: E501
         ]
 
 
