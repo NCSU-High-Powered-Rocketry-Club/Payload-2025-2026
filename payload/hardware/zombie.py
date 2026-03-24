@@ -1,10 +1,13 @@
 """This is Zombie, the part of payload that drills and analyzes soil."""
 
 import time
+import platform
 
-from gpiozero import Servo
-from gpiozero.devices import Device
-from gpiozero.pins.pigpio import PiGPIOFactory
+# Import only if on Raspberry Pi
+if platform.system() == 'Linux':
+    from gpiozero import Servo
+    from gpiozero.devices import Device
+    from gpiozero.pins.pigpio import PiGPIOFactory
 
 from payload.base_classes.base_zombie import BaseZombie
 from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket

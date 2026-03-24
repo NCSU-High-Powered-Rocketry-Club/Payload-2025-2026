@@ -1,10 +1,18 @@
 """This is Grave, the part of payload that ejects Zombie."""
 
 import time
+import platform
 
-# Servo imports
-from gpiozero import AngularServo, Device
-from gpiozero.pins.pigpio import PiGPIOFactory
+# Imports only if running on Raspberry Pi
+if platform.system() == 'Linux':
+    
+    # Servo Imports
+    from gpiozero import AngularServo, Device
+    from gpiozero.pins.pigpio import PiGPIOFactory
+    
+    # Stepper Motor Imports
+    import board  # type: ignore # Only imported when real hardware is used # noqa: PLC0415
+    from digitalio import DigitalInOut, Direction  # type: ignore # noqa: PLC0415
 
 from payload.base_classes.base_grave import BaseGrave
 from payload.data_handling.packets.grave_data_packet import GraveDataPacket
@@ -58,9 +66,7 @@ class LeadScrewDriver:
     """Driver for the lead screw."""
 
     def __init__(self, dir_pin=None, step_pin=None, slp_pin=None):
-        import board  # type: ignore # Only imported when real hardware is used # noqa: PLC0415
-        from digitalio import DigitalInOut, Direction  # type: ignore # noqa: PLC0415
-
+        
         dir_pin = dir_pin or board.D27
         step_pin = step_pin or board.D22
         slp_pin = slp_pin or board.D17
