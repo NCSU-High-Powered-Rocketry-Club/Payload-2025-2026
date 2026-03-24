@@ -72,6 +72,7 @@ class Context:
     def start(self):
         self.firm.start()
         self.logger.start()
+        
 
     def stop(self):
         self.firm.stop()

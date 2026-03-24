@@ -10,6 +10,7 @@ from payload.data_handling.logger import Logger
 from payload.hardware.firm import FIRM
 from payload.mock.mock_firm import MockFIRM
 from payload.utils import arg_parser
+from payload.mock.display import FlightDisplay
 
 
 def create_firm_from_args(args):
@@ -72,7 +73,10 @@ def run_payload(*, use_grave: bool, use_zombie: bool):
         firm=firm,
         logger=logger,
     )
-    run_flight_loop(context)
+    flight_display = FlightDisplay(context, args)
+    
+    # Run main flight loop
+    run_flight_loop(context, flight_display)
 
 
 def run_grave():
@@ -85,10 +89,13 @@ def run_zombie():
     run_payload(use_grave=False, use_zombie=True)
 
 
-def run_flight_loop(context: Context):
+def run_flight_loop(context: Context, 
+                    flight_display: FlightDisplay
+                    ):
     """Runs the main loop for the code."""
     try:
         context.start()
+        flight_display.start()
         while True:
             context.update()
     except KeyboardInterrupt:

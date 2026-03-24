@@ -127,8 +127,6 @@ class FlightDisplay:
         ends.
         """
         # Don't print the flight data if we are in debug mode
-        if self._args.debug:
-            return
 
         # Wait till we processed a data packet. This is to prevent the display from updating
         # before we have any data to display.
@@ -170,7 +168,7 @@ class FlightDisplay:
 
 
         time_since_launch = (
-            (self._context.context_data_packet.update_timestamp_ns / 1000)
+            (self._context.context_data_packet.update_timestamp_ns / 1_000_000_000)
             - (self._context.launch_time_seconds
             if self._context.launch_time_seconds
             else 0)
@@ -184,7 +182,7 @@ class FlightDisplay:
             f"Time since replay start:      {C}{time.time() - self._start_time:<10.2f}{RESET} {R}s{RESET}",  # noqa: E501
             f"{Y}{'=' * 12} REAL TIME FLIGHT DATA {'=' * 12}{RESET}",
             # Format time as MM:SS:
-            f"Time (EST):                {G}{self._context.context_data_packet.epoch_time}{RESET}"
+            f"Time (EST):                {G}{self._context.context_data_packet.epoch_time}{RESET}",
             f"Launch time:               {G}T+{time.strftime('%M:%S', time.gmtime(time_since_launch))}{RESET}",  # noqa: E501
             f"State:                     {G}{self._context.state.name:<15}{RESET}",
             f"Total Acceleration:        {G}{self._context.total_acceleration:<10.2f}{RESET} {R}m/s^2{RESET}", # noqa: E501
@@ -202,16 +200,16 @@ class FlightDisplay:
             )
 
         # Adds additional info to the display if -v was specified
-        if self._args.verbose:
-            output.extend(
-                [
-                    f"{Y}{'=' * 18} DEBUG INFO {'=' * 17}{RESET}",
-                    f"Fetched packets in Main:         {G}{fetched_packets_in_main:<10}{RESET} {R}packets{RESET}",  # noqa: E501
-                    f"Log buffer size:                 {G}{len(self._context.logger._log_buffer):<10}{RESET} {R}packets{RESET}",  # noqa: E501
-                    # Use htop -H -p <PID> to see thread CPU usage
-                    f"Current process ID:              {G}{self._current_pid:<10}{RESET} ",
-                ]
-            )
+        #if self._args.verbose:
+        #    output.extend(
+        #        [
+        #            f"{Y}{'=' * 18} DEBUG INFO {'=' * 17}{RESET}",
+        #            f"Fetched packets in Main:         {G}{fetched_packets_in_main:<10}{RESET} {R}packets{RESET}",  # noqa: E501
+        #            f"Log buffer size:                 {G}{len(self._context.logger._log_buffer):<10}{RESET} {R}packets{RESET}",  # noqa: E501
+        #            # Use htop -H -p <PID> to see thread CPU usage
+        #            f"Current process ID:              {G}{self._current_pid:<10}{RESET} ",
+        #        ]
+        #    )
 
         # Print the output
         print("\n".join(output))
