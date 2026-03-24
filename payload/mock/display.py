@@ -167,7 +167,7 @@ class FlightDisplay:
         """
         fetched_packets_in_main = self._context.context_data_packet.retrieved_firm_packets
 
-        data_processor = self._context.data_processor
+       
 
         time_since_launch = (
             (self._context.context_data_packet.update_timestamp_ns / 1000)
