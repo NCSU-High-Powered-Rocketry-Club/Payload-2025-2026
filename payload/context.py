@@ -43,6 +43,7 @@ class Context:
         "state",
         "zombie",
         "zombie_data_packet",
+        "launch_time_seconds",
     )
 
     def __init__(
@@ -62,6 +63,7 @@ class Context:
         self.context_data_packet: ContextDataPacket | None = None
         self.grave_data_packet: GraveDataPacket | None = None
         self.zombie_data_packet: ZombieDataPacket | None = None
+        self.launch_time_seconds: float = 0
 
     def start(self):
         self.firm.start()

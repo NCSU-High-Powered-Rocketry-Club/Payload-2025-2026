@@ -147,7 +147,7 @@ class FlightDisplay:
             if self._args.mode == "real":
                 self.sound_alarm_if_imu_is_having_issues()
                 # We will stop the display when the rocket takes off (performance reasons)
-                if self._context.state.name == "MotorBurnState":
+                if self._context.state.name == "Launched":
                     self._update_display(DisplayEndingType.TAKEOFF)
                     break
 
@@ -161,7 +161,7 @@ class FlightDisplay:
 
     def _update_display(self, end_type: DisplayEndingType | None = None) -> None:
         """
-        Updates the display with real-time data.
+        Updates the ditsplay with real-time data.
 
         :param end_type: The type of ending for the flight data display.
         """
@@ -170,10 +170,10 @@ class FlightDisplay:
         data_processor = self._context.data_processor
 
         time_since_launch = (
-            self._context.data_processor.current_timestamp_seconds
-            - self._context.launch_time_seconds
+            (self._context.context_data_packet.update_timestamp_ns / 1000)
+            - (self._context.launch_time_seconds
             if self._context.launch_time_seconds
-            else 0
+            else 0)
         )
 
         # Prepare output

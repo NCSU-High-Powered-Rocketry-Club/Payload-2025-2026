@@ -90,6 +90,7 @@ class Launched(State):
     def __init__(self, context: Context) -> None:
         super().__init__(context)
         self._start_time = time.monotonic()
+        self.context.launch_time_seconds = context.context_data_packet.update_timestamp_ns / 1000
 
     def update(self) -> None:
         """
