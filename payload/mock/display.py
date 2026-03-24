@@ -167,7 +167,7 @@ class FlightDisplay:
         """
         fetched_packets_in_main = self._context.context_data_packet.retrieved_firm_packets
 
-       
+
 
         time_since_launch = (
             (self._context.context_data_packet.update_timestamp_ns / 1000)
@@ -175,7 +175,7 @@ class FlightDisplay:
             if self._context.launch_time_seconds
             else 0)
         )
-        
+
 
         # Prepare output
         output = [
@@ -199,7 +199,7 @@ class FlightDisplay:
                     f"Ejection Status:           {G}{bool(self._context.grave_data_packet.position):<10}{RESET}"
                 ]
             )
-        
+
         # Adds additional info to the display if -v was specified
         if self._args.verbose:
             output.extend(

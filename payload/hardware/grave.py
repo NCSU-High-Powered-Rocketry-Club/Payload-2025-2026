@@ -58,8 +58,8 @@ class LeadScrewDriver:
     """Driver for the lead screw."""
 
     def __init__(self, dir_pin=None, step_pin=None, slp_pin=None):
-        import board  # Only imported when real hardware is used
-        from digitalio import DigitalInOut, Direction
+        import board  # type: ignore # Only imported when real hardware is used # noqa: PLC0415
+        from digitalio import DigitalInOut, Direction  # type: ignore # noqa: PLC0415
 
         dir_pin = dir_pin or board.D27
         step_pin = step_pin or board.D22
