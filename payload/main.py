@@ -9,6 +9,7 @@ from payload.context import Context
 from payload.data_handling.logger import Logger
 from payload.hardware.firm import FIRM
 from payload.mock.mock_firm import MockFIRM
+from payload.mock.mock_logger import MockLogger
 from payload.utils import arg_parser
 from payload.mock.display import FlightDisplay
 
@@ -58,7 +59,10 @@ def create_zombie_from_args(args):
 def create_components(args):
     """Creates the system components needed for the payload system."""
     firm = create_firm_from_args(args)
-    logger = Logger(LOGS_PATH)
+    if args.mode in ("mock", "pretend"):
+        logger = MockLogger(LOGS_PATH, delete_log_file=not args.keep_log_file)
+    else:
+        logger = Logger(LOGS_PATH)
     return firm, logger
 
 
@@ -74,7 +78,7 @@ def run_payload(*, use_grave: bool, use_zombie: bool):
         logger=logger,
     )
     flight_display = FlightDisplay(context, args)
-    
+
     # Run main flight loop
     run_flight_loop(context, flight_display)
 
