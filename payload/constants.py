@@ -4,14 +4,15 @@ from pathlib import Path
 
 # ------------------------ FIRM constants ------------------------
 
-PORT = "COM9" #/dev/ttyACM0"
+PORT = "COM6" #/dev/ttyACM0"
 BAUD_RATE = 2_000_000
 SERIAL_TIMEOUT_SECONDS = 1.0
 
 # ------------------------ State machine constants ------------------------
 LAUNCH_ALTITUDE_METERS = 200
 LAUNCH_ACCELERATION_GS = 5
-LAUNCH_STATE_LENGTH_SECONDS = 15  # Lauren said main at crapogee would result in this descent time
+LAUNCH_STATE_MAX_LENGTH_SECONDS = 345  # Lauren said main at crapogee would result in this descent time
+LAUNCH_STATE_CHECK_LENGTH_SECONDS = 90
 GRAVE_DEPLOY_LENGTH_SECONDS = 10
 
 # ------------------------ Logger constants------------------------

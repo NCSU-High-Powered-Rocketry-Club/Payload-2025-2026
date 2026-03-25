@@ -94,6 +94,8 @@ class Context:
                 + (self.most_recent_firm_data_packet.raw_acceleration_x_gs**2)
                 ) ** 0.5
         
+        
+        
         self.max_acceleration = max(self.total_acceleration, self.max_acceleration)
 
         self.generate_data_packets()

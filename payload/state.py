@@ -9,7 +9,8 @@ from typing import TYPE_CHECKING
 from payload.constants import (
     GRAVE_DEPLOY_LENGTH_SECONDS,
     LAUNCH_ACCELERATION_GS,
-    LAUNCH_STATE_LENGTH_SECONDS,
+    LAUNCH_STATE_MAX_LENGTH_SECONDS,
+    LAUNCH_STATE_CHECK_LENGTH_SECONDS,
 )
 
 if TYPE_CHECKING:
@@ -23,7 +24,7 @@ class State(ABC):
     After LandedState, Grave and Zombie diverge in which states they go into.
     """
 
-    __slots__ = ("context", "start_time_ns")
+    __slots__ = ("context", "start_time_ns",)
 
     def __init__(self, context: Context) -> None:
         self.context = context
@@ -85,20 +86,48 @@ class Launched(State):
     When the rocket has launched and it is in the air.
     """
 
-    __slots__ = ("_start_time",)
+    __slots__ = ("_start_time", "recent_acceleration", "recent_acceleration_difference", "acceleration_difference")
 
     def __init__(self, context: Context) -> None:
         super().__init__(context)
         self._start_time = time.monotonic()
         self.context.launch_time_seconds = context.context_data_packet.update_timestamp_ns / 1_000_000_000
+        self.recent_acceleration: list[float] = []
+        self.recent_acceleration_difference: list[float] = []
+        self.acceleration_difference: float = 1
 
     def update(self) -> None:
         """
         Check if enough time has elapsed since launch to say we've landed.
         """
+        # Check to see if the descent time for main at crapogee has passed
         elapsed = time.monotonic() - self._start_time
-        if elapsed >= LAUNCH_STATE_LENGTH_SECONDS:
-            self.next_state()
+        if elapsed >= LAUNCH_STATE_MAX_LENGTH_SECONDS:
+            self.next_state() 
+
+        # Append the recent acceleration data from firm
+        self.recent_acceleration.extend([(
+            (
+                (item.raw_acceleration_z_gs**2)
+                + (item.raw_acceleration_y_gs**2)
+                + (item.raw_acceleration_x_gs**2)
+            )
+            ** 0.5
+        )
+        for item in self.context.firm_data_packets[-500:]])
+        
+        # Trim list to save data and processing power
+        self.recent_acceleration = self.recent_acceleration[-500:]
+        
+        # Check if landed after time for nominal flight
+        if (
+            (elapsed >= LAUNCH_STATE_CHECK_LENGTH_SECONDS) 
+            and (len(self.recent_acceleration) >= 500)
+        ):
+            self.recent_acceleration_difference = [abs(item - 1.0) for item in self.recent_acceleration]
+            if (all(item <= 0.008 for item in self.recent_acceleration_difference)):
+                self.next_state()
+
 
     def next_state(self) -> None:
         self.context.state = LandedState(self.context)
