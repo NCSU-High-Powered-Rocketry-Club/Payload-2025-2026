@@ -184,7 +184,8 @@ class FlightDisplay:
             # Format time as MM:SS:
             f"Time (EST):                {G}{self._context.context_data_packet.epoch_time}{RESET}",
             f"Launch time:               {G}T+{time.strftime('%M:%S', time.gmtime(time_since_launch))}{RESET}",  # noqa: E501
-            f"State:                     {G}{self._context.state.name:<15}{RESET}",
+            f"State:                     {G}{self._context.state.name:<15}{RESET}", # noqa: E501
+            f"Altitude:                  {G}{self._context.most_recent_firm_data_packet.est_position_z_meters:<10.3f}{RESET} {R}m{RESET}", # noqa: E501
             f"Total Acceleration:        {G}{self._context.total_acceleration:<10.3f}{RESET} {R}G{RESET}", # noqa: E501
             f"Max Acceleration so far:   {G}{self._context.max_acceleration:<10.3}{RESET} {R}G{RESET}", # noqa: E501
         ]

@@ -5,6 +5,7 @@ Module for the finite state machine that represents which state of flight the ro
 import time
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
+import numpy as np
 
 from payload.constants import (
     GRAVE_DEPLOY_LENGTH_SECONDS,
@@ -123,9 +124,11 @@ class Launched(State):
         if (
             (elapsed >= LAUNCH_STATE_CHECK_LENGTH_SECONDS) 
             and (len(self.recent_acceleration) >= 500)
+            and (self.context.most_recent_firm_data_packet.est_position_z_meters < 5)
         ):
             self.recent_acceleration_difference = [abs(item - 1.0) for item in self.recent_acceleration]
-            if (all(item <= 0.008 for item in self.recent_acceleration_difference)):
+            if (all(item <= 0.03 for item in self.recent_acceleration_difference)
+                and np.std(self.recent_acceleration_difference) < 0.005):
                 self.next_state()
 
 
