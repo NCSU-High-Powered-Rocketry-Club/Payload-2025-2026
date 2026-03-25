@@ -8,10 +8,10 @@ from payload.constants import LOGS_PATH
 from payload.context import Context
 from payload.data_handling.logger import Logger
 from payload.hardware.firm import FIRM
+from payload.mock.display import FlightDisplay
 from payload.mock.mock_firm import MockFIRM
 from payload.mock.mock_logger import MockLogger
 from payload.utils import arg_parser
-from payload.mock.display import FlightDisplay
 
 
 def create_firm_from_args(args):

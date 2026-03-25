@@ -1,5 +1,6 @@
 """The context for the payload state machine."""
 
+import threading
 import time
 from datetime import datetime
 from typing import TYPE_CHECKING
@@ -38,14 +39,14 @@ class Context:
         "firm_data_packets",
         "grave",
         "grave_data_packet",
+        "launch_time_seconds",
         "logger",
+        "max_acceleration",
         "most_recent_firm_data_packet",
         "state",
+        "total_acceleration",
         "zombie",
         "zombie_data_packet",
-        "launch_time_seconds",
-        "total_acceleration",
-        "max_acceleration",
     )
 
     def __init__(
@@ -72,7 +73,7 @@ class Context:
     def start(self):
         self.firm.start()
         self.logger.start()
-        
+
 
     def stop(self):
         self.firm.stop()
@@ -93,9 +94,7 @@ class Context:
                 + (self.most_recent_firm_data_packet.raw_acceleration_y_gs**2)
                 + (self.most_recent_firm_data_packet.raw_acceleration_x_gs**2)
                 ) ** 0.5
-        
-        
-        
+
         self.max_acceleration = max(self.total_acceleration, self.max_acceleration)
 
         self.generate_data_packets()
@@ -113,7 +112,7 @@ class Context:
         """
         Deploys Zombie out of the rocket. This method should only be called if code is Grave.
         """
-        self.grave.deploy_zombie()
+        self._deploy_thread = self._run_in_thread(self.grave.deploy_zombie, "Deploy Zombie Thread")
 
     def generate_data_packets(self) -> None:
         self.context_data_packet = ContextDataPacket(
@@ -133,11 +132,11 @@ class Context:
 
     def deploy_zombie_legs(self) -> None:
         """Deploys zombie legs to stand it up. Only called if this is Zombie."""
-        self.zombie.deploy_legs()
+        self._legs_thread = self._run_in_thread(self.zombie.deploy_legs, "Deploy Legs Thread")
 
     def start_zombie_drilling(self) -> None:
         """Starts the drilling mechanism. Only called if this is Zombie."""
-        self.zombie.start_drilling()
+        self._drilling_thread = self._run_in_thread(self.zombie.start_drilling, "Drilling Thread")
         self.zombie.start_soil_sensor()
 
     def stop_zombie_drilling(self) -> None:
@@ -147,3 +146,9 @@ class Context:
     def check_zombie_deployed(self) -> bool:
         """Returns True if zombie legs are deployed and orientation is correct."""
         return self.zombie.check_deployment() and self.zombie.check_orientation()
+
+    def _run_in_thread(self, target, name: str) -> threading.Thread:
+        """Runs a function in a daemon thread. Returns the thread so callers can track it."""
+        thread = threading.Thread(target=target, name=name, daemon=True)
+        thread.start()
+        return thread

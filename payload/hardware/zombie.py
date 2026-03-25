@@ -1,10 +1,10 @@
 """This is Zombie, the part of payload that drills and analyzes soil."""
 
-import time
 import platform
+import time
 
 # Import only if on Raspberry Pi
-if platform.system() == 'Linux':
+if platform.system() == "Linux":
     from gpiozero import Servo
     from gpiozero.devices import Device
     from gpiozero.pins.pigpio import PiGPIOFactory
