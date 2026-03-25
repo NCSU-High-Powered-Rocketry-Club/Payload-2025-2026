@@ -93,7 +93,7 @@ def run_zombie():
     run_payload(use_grave=False, use_zombie=True)
 
 
-def run_flight_loop(context: Context, 
+def run_flight_loop(context: Context,
                     flight_display: FlightDisplay
                     ):
     """Runs the main loop for the code."""

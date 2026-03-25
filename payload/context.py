@@ -34,6 +34,9 @@ class Context:
     """
 
     __slots__ = (
+        "_deploy_thread",
+        "_drilling_thread",
+        "_legs_thread",
         "context_data_packet",
         "firm",
         "firm_data_packets",
@@ -69,6 +72,9 @@ class Context:
         self.launch_time_seconds: int = 0
         self.total_acceleration: float = 0
         self.max_acceleration: float = 0
+        self._deploy_thread: threading.Thread | None = None
+        self._legs_thread: threading.Thread | None = None
+        self._drilling_thread: threading.Thread | None = None
 
     def start(self):
         self.firm.start()
@@ -107,12 +113,21 @@ class Context:
             self.zombie_data_packet,
         )
 
-    # Ask Jackson about how this works
+    def _run_in_thread(self, target, name: str) -> threading.Thread:
+        """Runs a function in a daemon thread. Returns the thread so callers can track it."""
+        thread = threading.Thread(target=target, name=name, daemon=True)
+        thread.start()
+        return thread
+
     def deploy_zombie(self):
         """
         Deploys Zombie out of the rocket. This method should only be called if code is Grave.
         """
         self._deploy_thread = self._run_in_thread(self.grave.deploy_zombie, "Deploy Zombie Thread")
+
+    @property
+    def is_deploy_complete(self) -> bool:
+        return self._deploy_thread is not None and not self._deploy_thread.is_alive()
 
     def generate_data_packets(self) -> None:
         self.context_data_packet = ContextDataPacket(
@@ -134,21 +149,24 @@ class Context:
         """Deploys zombie legs to stand it up. Only called if this is Zombie."""
         self._legs_thread = self._run_in_thread(self.zombie.deploy_legs, "Deploy Legs Thread")
 
+    @property
+    def is_legs_deployed(self) -> bool:
+        return self._legs_thread is not None and not self._legs_thread.is_alive()
+
     def start_zombie_drilling(self) -> None:
         """Starts the drilling mechanism. Only called if this is Zombie."""
-        self._drilling_thread = self._run_in_thread(self.zombie.start_drilling, "Drilling Thread")
-        self.zombie.start_soil_sensor()
+        self._drilling_thread = self._run_in_thread(self._drilling_sequence, "Drilling Thread")
 
-    def stop_zombie_drilling(self) -> None:
-        """Stops the drilling mechanism. Only called if this is Zombie."""
+    def _drilling_sequence(self):
+        self.zombie.start_drilling()
+        self.zombie.start_soil_sensor()
         self.zombie.stop_drilling()
 
-    def check_zombie_deployed(self) -> bool:
-        """Returns True if zombie legs are deployed and orientation is correct."""
+    @property
+    def is_drilling_complete(self) -> bool:
+        return self._drilling_thread is not None and not self._drilling_thread.is_alive()
+
+    @property
+    def is_zombie_deployed(self) -> bool:
         return self.zombie.check_deployment() and self.zombie.check_orientation()
 
-    def _run_in_thread(self, target, name: str) -> threading.Thread:
-        """Runs a function in a daemon thread. Returns the thread so callers can track it."""
-        thread = threading.Thread(target=target, name=name, daemon=True)
-        thread.start()
-        return thread
