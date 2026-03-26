@@ -227,11 +227,12 @@ class ZombieDeployedState(State):
 class ZombieDrillingState(State):
     """When the zombie is drilling and collecting soil samples."""
 
-    __slots__ = ("_drilling_started",)
+    __slots__ = ("_drilling_started", "_start_time")
 
     def __init__(self, context: Context) -> None:
         super().__init__(context)
         self._drilling_started = False
+        self._start_time = time.monotonic()
 
     def update(self) -> None:
         elapsed = time.monotonic() - self._start_time

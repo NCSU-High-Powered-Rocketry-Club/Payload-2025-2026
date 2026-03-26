@@ -13,7 +13,8 @@ LAUNCH_ALTITUDE_METERS = 200
 LAUNCH_ACCELERATION_GS = 5
 LAUNCH_STATE_MAX_LENGTH_SECONDS = 345  # Lauren said main at crapogee would result in this descent time
 LAUNCH_STATE_CHECK_LENGTH_SECONDS = 90
-GRAVE_DEPLOY_LENGTH_SECONDS = 5
+GRAVE_DEPLOY_LENGTH_SECONDS = 90
+TOTAL_OPERATION_TIME = 900
 
 # ------------------------ Logger constants------------------------
 LOGS_PATH = Path("logs")
