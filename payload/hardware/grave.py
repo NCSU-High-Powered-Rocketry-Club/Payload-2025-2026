@@ -116,14 +116,14 @@ class Grave(BaseGrave):
     High-level controller for the Grave deployment system.
     """
 
-    __slots__ = ("deployed", "latch_state", "lead_screw", "motor_extention", "servo")
+    __slots__ = ("deployed", "latch_state", "lead_screw", "ejecting_zombie", "servo")
 
     def __init__(self):
         self.servo = ServoDriver()
         self.lead_screw = LeadScrewDriver()
         self.deployed = False
-        self.latch_state = 0
-        self.motor_extention = 0
+        self.latch_state = False
+        self.ejecting_zombie = False
 
     # TODO: use these when giving grave its own thread
     def start(self):
@@ -139,12 +139,12 @@ class Grave(BaseGrave):
 
     def deploy_zombie(self):
         self.servo.release_latch()
-        self.latch_state = 1
+        self.latch_state = True
         time.sleep(2)
-        self.motor_extention = 1
+        self.ejecting_zombie = True
         self.lead_screw.move(470, direction="extend")  # mm
         time.sleep(5)
         self.lead_screw.move(80, direction="retract")  # mm
 
     def get_data_packet(self):
-        return GraveDataPacket(position=self.motor_extention, latch=self.latch_state)
+        return GraveDataPacket(ejecting_zombie=self.ejecting_zombie, latch=self.latch_state)

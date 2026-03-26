@@ -7,10 +7,12 @@ from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket
 class MockZombie(BaseZombie):
     """A mock implementation of the Zombie class for testing purposes."""
 
-    __slots__ = ("soil_data",)
+    __slots__ = ("soil_data", "activating_legs", "checking_orientation")
 
     def __init__(self):
         self.soil_data = 0
+        self.activating_legs = False
+        self.checking_orientation = False
 
     def start(self) -> None:
         pass
@@ -25,6 +27,7 @@ class MockZombie(BaseZombie):
         pass
 
     def deploy_legs(self) -> None:
+        self.activating_legs = True
         pass
 
     def start_drilling(self) -> None:
@@ -40,6 +43,7 @@ class MockZombie(BaseZombie):
         return True
 
     def check_orientation(self) -> bool:
+        self.checking_orientation = True
         return True
 
     def get_soil_data(self):
@@ -48,4 +52,4 @@ class MockZombie(BaseZombie):
 
     def get_data_packet(self):
         """Get the data packet for zombie. This will involve firm data and soil sensor data."""
-        return ZombieDataPacket(soil_info=self.get_soil_data())
+        return ZombieDataPacket(soil_info=self.get_soil_data(), activating_legs=self.activating_legs, checking_orientation=self.checking_orientation)

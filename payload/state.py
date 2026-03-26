@@ -217,7 +217,7 @@ class ZombieDeployedState(State):
         if not self._deploy_started:
             self.context.deploy_zombie_legs()
             self._deploy_started = True
-        elif self.context.check_zombie_deployed():
+        elif self.context.is_legs_deployed:
             self.next_state()
 
     def next_state(self) -> None:

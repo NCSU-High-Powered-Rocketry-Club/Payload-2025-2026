@@ -40,8 +40,10 @@ class LoggerDataPacket(msgspec.Struct, array_like=True, kw_only=True):
     est_tilt_angle_degrees: float | None = None
 
     # Grave packets
-    position: int | None = None
-    latch: int | None = None
+    ejecting_zombie: bool | None = None
+    latch: bool | None = None
 
     # Zombie packets
+    activating_legs: bool | None = None
+    checking_orientation: bool | None = None
     soil_info: None = None
