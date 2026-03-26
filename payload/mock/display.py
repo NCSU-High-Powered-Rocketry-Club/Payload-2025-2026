@@ -194,16 +194,16 @@ class FlightDisplay:
         if self._context.grave is not None:
             output.extend(
                 [
-                    f"Latch Status:              {G}{self._context.grave_data_packet.latch:<10}{RESET}",
-                    f"Ejection Status:           {G}{self._context.grave_data_packet.ejecting_zombie:<10}{RESET}",
+                    f"Latch Status:              {G}{str(self._context.grave_data_packet.latch):<10}{RESET}",
+                    f"Ejection Status:           {G}{str(self._context.grave_data_packet.ejecting_zombie):<10}{RESET}",
                 ]
             )
             
         if self._context.zombie is not None:
             output.extend(
                 [
-                    f"Activating Legs:           {G}{self._context.zombie_data_packet.activating_legs:<10}{RESET}",
-                    f"Checking Orientation:      {G}{self._context.zombie_data_packet.checking_orientation:<10}{RESET}",
+                    f"Activating Legs:           {G}{str(self._context.zombie_data_packet.activating_legs):<10}{RESET}",
+                    f"Checking Orientation:      {G}{str(self._context.zombie_data_packet.checking_orientation):<10}{RESET}",
                 ]
             )
 

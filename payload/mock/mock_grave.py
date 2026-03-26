@@ -34,4 +34,4 @@ class MockGrave(BaseGrave):
         self.ejecting_zombie = True
 
     def get_data_packet(self):
-        return GraveDataPacket(position=self.ejecting_zombie, latch=self.latch_state)
+        return GraveDataPacket(ejecting_zombie=self.ejecting_zombie, latch=self.latch_state)

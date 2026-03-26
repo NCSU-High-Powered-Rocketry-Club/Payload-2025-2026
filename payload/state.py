@@ -207,7 +207,7 @@ class ZombieDeployedState(State):
         if not self._deploy_started:
             self.context.deploy_zombie_legs()
             self._deploy_started = True
-        elif self.context.check_zombie_deployed():
+        elif self.context.is_legs_deployed:
             self.next_state()
 
     def next_state(self) -> None:
@@ -227,9 +227,9 @@ class ZombieDrillingState(State):
         if not self._drilling_started:
             self.context.start_zombie_drilling()
             self._drilling_started = True
-        # replace with a real "sample collected" check when ready
+        # Replace with timer to that it runs for the rest of the 15 minutes
         elif self.context.zombie.get_soil_data() is not None:
-            self.context.stop_zombie_drilling()
+            # self.context.stop_zombie_drilling()
             self.next_state()
 
     def next_state(self) -> None:

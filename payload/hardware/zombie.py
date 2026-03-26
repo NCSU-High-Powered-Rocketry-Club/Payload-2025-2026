@@ -64,6 +64,8 @@ class Zombie(BaseZombie):
         """
         
         self.checking_orientation = True
+        
+        return True
 
     def get_soil_data(self):
         """Function to get the soil data from the sensor."""
