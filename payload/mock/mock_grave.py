@@ -10,12 +10,12 @@ class MockGrave(BaseGrave):
     High-level controller for the Grave deployment system.
     """
 
-    __slots__ = ("deployed", "latch_state", "motor_extension",)
+    __slots__ = ("deployed", "latch_state", "ejecting_zombie",)
 
     def __init__(self):
         self.deployed = False
-        self.latch_state = 0
-        self.motor_extension = 0
+        self.latch_state = False
+        self.ejecting_zombie = False
 
     def start(self):
         pass
@@ -29,9 +29,9 @@ class MockGrave(BaseGrave):
         pass
 
     def deploy_zombie(self):
-        self.latch_state = 1
-        time.sleep(2)
-        self.motor_extension = 1
+        self.latch_state = True
+        time.sleep(5)
+        self.ejecting_zombie = True
 
     def get_data_packet(self):
-        return GraveDataPacket(position=self.motor_extension, latch=self.latch_state)
+        return GraveDataPacket(position=self.ejecting_zombie, latch=self.latch_state)

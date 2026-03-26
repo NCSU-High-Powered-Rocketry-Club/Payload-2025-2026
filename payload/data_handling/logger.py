@@ -182,8 +182,10 @@ class Logger:
                 firm_data_packet.raw_angular_rate_z_deg_per_s
             )
             logger_packet.temperature_celsius = firm_data_packet.temperature_celsius
-            logger_packet.position = grave_data_packet.position
+            logger_packet.ejecting_zombie = grave_data_packet.ejecting_zombie
             logger_packet.latch = grave_data_packet.latch
+            logger_packet.activating_legs = zombie_data_packet.activating_legs
+            logger_packet.checking_orientation = zombie_data_packet.checking_orientation
             logger_packet.soil_info = zombie_data_packet.soil_info
             logger_data_packets.append(logger_packet)
 
