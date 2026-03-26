@@ -5,13 +5,14 @@ Module for the finite state machine that represents which state of flight the ro
 import time
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
+
 import numpy as np
 
 from payload.constants import (
     GRAVE_DEPLOY_LENGTH_SECONDS,
     LAUNCH_ACCELERATION_GS,
-    LAUNCH_STATE_MAX_LENGTH_SECONDS,
     LAUNCH_STATE_CHECK_LENGTH_SECONDS,
+    LAUNCH_STATE_MAX_LENGTH_SECONDS,
 )
 
 if TYPE_CHECKING:
@@ -87,12 +88,19 @@ class Launched(State):
     When the rocket has launched and it is in the air.
     """
 
-    __slots__ = ("_start_time", "recent_acceleration", "recent_acceleration_difference", "acceleration_difference")
+    __slots__ = (
+        "_start_time",
+        "acceleration_difference",
+        "recent_acceleration",
+        "recent_acceleration_difference",
+    )
 
     def __init__(self, context: Context) -> None:
         super().__init__(context)
         self._start_time = time.monotonic()
-        self.context.launch_time_seconds = context.context_data_packet.update_timestamp_ns / 1_000_000_000
+        self.context.launch_time_seconds = (
+            context.context_data_packet.update_timestamp_ns / 1_000_000_000
+        )
         self.recent_acceleration: list[float] = []
         self.recent_acceleration_difference: list[float] = []
         self.acceleration_difference: float = 1
@@ -104,7 +112,7 @@ class Launched(State):
         # Check to see if the descent time for main at crapogee has passed
         elapsed = time.monotonic() - self._start_time
         if elapsed >= LAUNCH_STATE_MAX_LENGTH_SECONDS:
-            self.next_state() 
+            self.next_state()
 
         # Append the recent acceleration data from firm
         self.recent_acceleration.extend([(
@@ -116,17 +124,19 @@ class Launched(State):
             ** 0.5
         )
         for item in self.context.firm_data_packets[-500:]])
-        
+
         # Trim list to save data and processing power
         self.recent_acceleration = self.recent_acceleration[-500:]
-        
+
         # Check if landed after time for nominal flight
         if (
-            (elapsed >= LAUNCH_STATE_CHECK_LENGTH_SECONDS) 
+            (elapsed >= LAUNCH_STATE_CHECK_LENGTH_SECONDS)
             and (len(self.recent_acceleration) >= 500)
             and (self.context.most_recent_firm_data_packet.est_position_z_meters < 5)
         ):
-            self.recent_acceleration_difference = [abs(item - 1.0) for item in self.recent_acceleration]
+            self.recent_acceleration_difference = [
+                abs(item - 1.0) for item in self.recent_acceleration
+            ]
             if (all(item <= 0.03 for item in self.recent_acceleration_difference)
                 and np.std(self.recent_acceleration_difference) < 0.005):
                 self.next_state()
@@ -224,12 +234,12 @@ class ZombieDrillingState(State):
         self._drilling_started = False
 
     def update(self) -> None:
+        elapsed = time.monotonic() - self._start_time
         if not self._drilling_started:
             self.context.start_zombie_drilling()
             self._drilling_started = True
         # replace with a real "sample collected" check when ready
-        elif self.context.zombie.get_soil_data() is not None:
-            self.context.stop_zombie_drilling()
+        elif elapsed >= 600:
             self.next_state()
 
     def next_state(self) -> None:
