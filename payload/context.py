@@ -125,7 +125,7 @@ class Context:
         """
         Deploys Zombie out of the rocket. This method should only be called if code is Grave.
         """
-        self._deploy_thread = self._run_in_thread(self.grave.deploy_zombie, "Deploy Zombie Thread")
+        self._deploy_thread = self._run_in_thread(self.grave.deploy_zombie(), "Deploy Zombie Thread")
 
     @property
     def is_deploy_complete(self) -> bool:

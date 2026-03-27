@@ -9,7 +9,15 @@ dependencies = [
     "msgspec>=0.20.0",
     "pigpio>=1.78",
     "polars",
-    "tzdata"
+    "tzdata",
+    "numpy",
+    "colorama>=0.4.6",
+    "board>=1.0",
+    "gpio>=1.0.1",
+    "wiringpi>=2.60.1",
+    "adafruit-blinka>=9.0.4",
+    "rpi-gpio>=0.7.1",
+    "raspi-gpio>=0.1.9",
 ]
 
 [project.scripts]

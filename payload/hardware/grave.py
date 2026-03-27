@@ -23,7 +23,7 @@ class ServoDriver:
 
     # Pin should be 24
     def __init__(
-        self, pin=24, min_angle=0, max_angle=198, min_pwm_signal=0.00075, max_pwm_signal=0.00225
+        self, pin=13, min_angle=0, max_angle=198, min_pwm_signal=0.00075, max_pwm_signal=0.00225
     ):
         Device.pin_factory = PiGPIOFactory()
 
@@ -38,6 +38,7 @@ class ServoDriver:
         self.start_angle = max_angle - 1
         self.deploy_angle = max_angle - 40
         self.max_angle = max_angle
+        self.servo.angle = self.start_angle
 
     def release_latch(self):
         try:
@@ -68,8 +69,8 @@ class LeadScrewDriver:
     def __init__(self, dir_pin=None, step_pin=None, slp_pin=None):
         
         dir_pin = dir_pin or board.D27
-        step_pin = step_pin or board.D22
-        slp_pin = slp_pin or board.D17
+        step_pin = step_pin or board.D17
+        slp_pin = slp_pin or board.D22
 
         self.dir = DigitalInOut(dir_pin)
         self.dir.direction = Direction.OUTPUT
