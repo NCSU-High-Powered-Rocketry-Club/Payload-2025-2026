@@ -13,6 +13,7 @@ from payload.constants import (
     LAUNCH_ACCELERATION_GS,
     LAUNCH_STATE_CHECK_LENGTH_SECONDS,
     LAUNCH_STATE_MAX_LENGTH_SECONDS,
+    TOTAL_OPERATION_TIME
 )
 
 if TYPE_CHECKING:
@@ -159,6 +160,7 @@ class LandedState(State):
         # If this is zombie, we're just going to set a timer to move on to the next state
         if self.context.zombie:
             self._start_time = time.monotonic()
+            self.context.landing_time_seconds = self._start_time
 
     def update(self) -> None:
         """
@@ -227,20 +229,19 @@ class ZombieDeployedState(State):
 class ZombieDrillingState(State):
     """When the zombie is drilling and collecting soil samples."""
 
-    __slots__ = ("_drilling_started", "_start_time")
+    __slots__ = ("_drilling_started",)
 
     def __init__(self, context: Context) -> None:
         super().__init__(context)
         self._drilling_started = False
-        self._start_time = time.monotonic()
 
     def update(self) -> None:
-        elapsed = time.monotonic() - self._start_time
+        elapsed = time.monotonic() - self.context.landing_time_seconds
         if not self._drilling_started:
             self.context.start_zombie_drilling()
             self._drilling_started = True
         # replace with a real "sample collected" check when ready
-        elif elapsed >= 600:
+        elif elapsed >= TOTAL_OPERATION_TIME:
             self.next_state()
 
     def next_state(self) -> None:

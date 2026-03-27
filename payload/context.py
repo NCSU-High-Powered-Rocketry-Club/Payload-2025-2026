@@ -50,6 +50,7 @@ class Context:
         "total_acceleration",
         "zombie",
         "zombie_data_packet",
+        "landing_time_seconds"
     )
 
     def __init__(
@@ -75,6 +76,7 @@ class Context:
         self._deploy_thread: threading.Thread | None = None
         self._legs_thread: threading.Thread | None = None
         self._drilling_thread: threading.Thread | None = None
+        self.landing_time_seconds: int = 0
 
     def start(self):
         self.firm.start()
