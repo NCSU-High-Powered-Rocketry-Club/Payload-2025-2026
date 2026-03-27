@@ -145,7 +145,7 @@ class Grave(BaseGrave):
         self.ejecting_zombie = True
         self.lead_screw.move(470, direction="extend")  # mm
         time.sleep(5)
-        self.lead_screw.move(80, direction="retract")  # mm
+        self.lead_screw.move(120, direction="retract")  # mm
 
     def get_data_packet(self):
         return GraveDataPacket(ejecting_zombie=self.ejecting_zombie, latch=self.latch_state)
