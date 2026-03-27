@@ -80,7 +80,7 @@ class LeadScrewDriver:
 
         self.slp = DigitalInOut(slp_pin)
         self.slp.direction = Direction.OUTPUT
-        self.slp.value = False  # Start in sleep mode — LOW = sleeping on A4988
+        self.slp.value = False  # Start in sleep mode — LOW = sleeping on A4988 CHECK THIS WITH GRAVE
 
     def wake(self):
         self.slp.value = True
