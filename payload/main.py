@@ -12,6 +12,7 @@ from payload.mock.display import FlightDisplay
 from payload.mock.mock_firm import MockFIRM
 from payload.mock.mock_logger import MockLogger
 from payload.utils import arg_parser
+import time
 
 
 def create_firm_from_args(args):
@@ -35,22 +36,23 @@ def create_firm_from_args(args):
 
 
 def create_grave_from_args(args):
-    if args.mode == "real":
-        from payload.hardware.grave import Grave  # noqa: PLC0415
+    print("Making Grave")
+    if (args.mode == "real") or (args.motor):
+        from payload.hardware.grave import Grave # noqa: PLC0415
         return Grave()
 
-    if args.mode in {"mock", "pretend"}:
+    elif args.mode in {"mock", "pretend"}:
         from payload.mock.mock_grave import MockGrave  # noqa: PLC0415
         return MockGrave()
 
     raise ValueError(f"Unknown mode: {args.mode}")
 
 def create_zombie_from_args(args):
-    if args.mode == "real":
-        from payload.hardware.zombie import Zombie  # noqa: PLC0415
+    if (args.mode == "real") or (args.motor):
+        from payload.hardware.zombie import Zombie # noqa: PLC0415
         return Zombie()
 
-    if args.mode in {"mock", "pretend"}:
+    elif args.mode in {"mock", "pretend"}:
         from payload.mock.mock_zombie import MockZombie  # noqa: PLC0415
         return MockZombie()
     raise ValueError(f"Unknown mode: {args.mode}")
@@ -78,6 +80,7 @@ def run_payload(*, use_grave: bool, use_zombie: bool):
         logger=logger,
     )
     flight_display = FlightDisplay(context, args)
+    #flight_display = None
 
     # Run main flight loop
     run_flight_loop(context, flight_display)

@@ -120,6 +120,13 @@ def arg_parser() -> argparse.Namespace:
         action="store_true",
         help="Run replay at full speed (mock mode only).",
     )
+    
+    parser.add_argument(
+        "-r",
+        "--real-motors",
+        action="store_true",
+        help="Run replay with actual motor operation.",
+    )
 
     args = parser.parse_args()
 
@@ -136,5 +143,7 @@ def arg_parser() -> argparse.Namespace:
     else:
         args.mode = "real"
         args.path = None
+        
+    args.motor = args.real_motors
 
     return args
