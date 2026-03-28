@@ -74,6 +74,18 @@ class Zombie(BaseZombie):
     def get_data_packet(self):
         """Get the data packet for zombie. This will involve firm data and soil sensor data."""
         return ZombieDataPacket(soil_info=self.get_soil_data(), activating_legs=self.activating_legs, checking_orientation=self.checking_orientation)
+    
+    def start(self) -> None:
+        """Starts the zombie for processing data packets."""
+
+    def stop(self) -> None:
+        """Stops the zombie for processing data packets."""
+
+    def update(self):
+        pass
+
+    def process_data_packet(self, data_packet):
+        pass
 
 
 class INJORAServoDriver:
