@@ -1,8 +1,9 @@
 """
 File which contains utility functions which can be reused in the project.
 """
-
+import argparse
 import queue
+from pathlib import Path
 from typing import Any
 
 
@@ -73,3 +74,76 @@ def deadband(input_value: float, threshold: float) -> float:
     if abs(input_value) < threshold:
         return 0.0
     return input_value
+
+
+def arg_parser() -> argparse.Namespace:
+    """Parse CLI arguments for the payload program."""
+
+    parser = argparse.ArgumentParser(
+        description="Run payload in real, mock, or pretend mode."
+    )
+
+    mode_group = parser.add_mutually_exclusive_group()
+
+    mode_group.add_argument(
+        "-m",
+        "--mock",
+        type=Path,
+        metavar="FILE",
+        help=(
+            "Run in mock mode using the given flight data file. "
+            "If provided, mode will be set to 'mock'."
+        ),
+    )
+
+    mode_group.add_argument(
+        "-p",
+        "--pretend",
+        type=Path,
+        metavar="FILE",
+        help=(
+            "Run in pretend mode using the given .FRM file. "
+            "If provided, mode will be set to 'pretend'."
+        ),
+    )
+
+    parser.add_argument(
+        "-l",
+        "--keep-log-file",
+        action="store_true",
+        help="Keep the log file after replay stops.",
+    )
+
+    parser.add_argument(
+        "-f",
+        "--fast-replay",
+        action="store_true",
+        help="Run replay at full speed (mock mode only).",
+    )
+    
+    parser.add_argument(
+        "-r",
+        "--real-motors",
+        action="store_true",
+        help="Run replay with actual motor operation.",
+    )
+
+    args = parser.parse_args()
+
+    # Derive mode from arguments
+    if args.mock is not None:
+        args.mode = "mock"
+        args.path = args.mock
+    elif args.pretend is not None:
+        args.mode = "pretend"
+        args.path = args.pretend
+
+        if args.pretend.suffix.lower() != ".frm":
+            parser.error("--pretend requires a .FRM file")
+    else:
+        args.mode = "real"
+        args.path = None
+        
+    args.motor = args.real_motors
+
+    return args

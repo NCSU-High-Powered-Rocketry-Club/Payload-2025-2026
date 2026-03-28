@@ -1,18 +1,22 @@
 """This is Zombie, the part of payload that drills and analyzes soil."""
 
+import platform
 import time
 
-from gpiozero import Servo
-from gpiozero.devices import Device
-from gpiozero.pins.pigpio import PiGPIOFactory
+# Import only if on Raspberry Pi
+if platform.system() == "Linux":
+    from gpiozero import Servo
+    from gpiozero.devices import Device
+    from gpiozero.pins.pigpio import PiGPIOFactory
 
+from payload.base_classes.base_zombie import BaseZombie
 from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket
 
 
-class Zombie:
+class Zombie(BaseZombie):
     """A class representing a zombie payload."""
 
-    __slots__ = ("soil_data",)
+    __slots__ = ("soil_data", "activating_legs", "checking_orientation")
 
     def __init__(self):
         pass
@@ -21,6 +25,9 @@ class Zombie:
         """
         Deploys the legs of the zombie to stand it up.
         """
+        
+        self.activating_legs = True
+        
         try:
             servo = INJORAServoDriver(pin=16)
             servo.spin_forward(duration=10, speed=1.0)
@@ -55,6 +62,10 @@ class Zombie:
 
         :return: True if the zombie is upright, False otherwise.
         """
+        
+        self.checking_orientation = True
+        
+        return True
 
     def get_soil_data(self):
         """Function to get the soil data from the sensor."""
@@ -62,7 +73,7 @@ class Zombie:
 
     def get_data_packet(self):
         """Get the data packet for zombie. This will involve firm data and soil sensor data."""
-        return ZombieDataPacket(soil_info=self.get_soil_data())
+        return ZombieDataPacket(soil_info=self.get_soil_data(), activating_legs=self.activating_legs, checking_orientation=self.checking_orientation)
 
 
 class INJORAServoDriver:

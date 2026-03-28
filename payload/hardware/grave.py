@@ -1,15 +1,20 @@
 """This is Grave, the part of payload that ejects Zombie."""
 
 import time
+import platform
 
-# Lead screw imports
-import board
-from digitalio import DigitalInOut, Direction
+# Imports only if running on Raspberry Pi
+if platform.system() == 'Linux':
+    
+    # Servo Imports
+    from gpiozero import AngularServo, Device
+    from gpiozero.pins.pigpio import PiGPIOFactory
+    
+    # Stepper Motor Imports
+    import board  # type: ignore # Only imported when real hardware is used # noqa: PLC0415
+    from digitalio import DigitalInOut, Direction  # type: ignore # noqa: PLC0415
 
-# Servo imports
-from gpiozero import AngularServo, Device
-from gpiozero.pins.pigpio import PiGPIOFactory
-
+from payload.base_classes.base_grave import BaseGrave
 from payload.data_handling.packets.grave_data_packet import GraveDataPacket
 
 
@@ -18,7 +23,7 @@ class ServoDriver:
 
     # Pin should be 24
     def __init__(
-        self, pin=24, min_angle=0, max_angle=198, min_pwm_signal=0.00075, max_pwm_signal=0.00225
+        self, pin=13, min_angle=0, max_angle=198, min_pwm_signal=0.00075, max_pwm_signal=0.00225
     ):
         Device.pin_factory = PiGPIOFactory()
 
@@ -33,6 +38,7 @@ class ServoDriver:
         self.start_angle = max_angle - 1
         self.deploy_angle = max_angle - 40
         self.max_angle = max_angle
+        self.servo.angle = self.start_angle
 
     def release_latch(self):
         try:
@@ -60,8 +66,12 @@ class ServoDriver:
 class LeadScrewDriver:
     """Driver for the lead screw."""
 
-    # Pins should be 27, 22, and 17 (or whichever GPIO you wire SLEEP to)
-    def __init__(self, dir_pin=board.D27, step_pin=board.D22, slp_pin=board.D17):
+    def __init__(self, dir_pin=None, step_pin=None, slp_pin=None):
+        
+        dir_pin = dir_pin or board.D27
+        step_pin = step_pin or board.D17
+        slp_pin = slp_pin or board.D22
+
         self.dir = DigitalInOut(dir_pin)
         self.dir.direction = Direction.OUTPUT
 
@@ -70,7 +80,7 @@ class LeadScrewDriver:
 
         self.slp = DigitalInOut(slp_pin)
         self.slp.direction = Direction.OUTPUT
-        self.slp.value = False  # Start in sleep mode — LOW = sleeping on A4988
+        self.slp.value = False  # Start in sleep mode — LOW = sleeping on A4988 CHECK THIS WITH GRAVE
 
     def wake(self):
         self.slp.value = True
@@ -102,20 +112,21 @@ class LeadScrewDriver:
 # =========================
 
 
-class Grave:
+class Grave(BaseGrave):
     """
     High-level controller for the Grave deployment system.
     """
 
-    __slots__ = ("deployed", "latch_state", "lead_screw", "motor_extention", "servo")
+    __slots__ = ("deployed", "latch_state", "lead_screw", "ejecting_zombie", "servo")
 
     def __init__(self):
         self.servo = ServoDriver()
         self.lead_screw = LeadScrewDriver()
         self.deployed = False
-        self.latch_state = 0
-        self.motor_extention = 0
+        self.latch_state = False
+        self.ejecting_zombie = False
 
+    # TODO: use these when giving grave its own thread
     def start(self):
         pass
 
@@ -129,18 +140,12 @@ class Grave:
 
     def deploy_zombie(self):
         self.servo.release_latch()
-        self.latch_state = 1
+        self.latch_state = True
         time.sleep(2)
-        self.motor_extention = 1
+        self.ejecting_zombie = True
         self.lead_screw.move(470, direction="extend")  # mm
         time.sleep(5)
-        self.lead_screw.move(80, direction="retract")  # mm
-
-    def get_motor_extension(self):
-        return self.motor_extention
-
-    def get_latch_state(self):
-        return self.latch_state
+        self.lead_screw.move(120, direction="retract")  # mm
 
     def get_data_packet(self):
-        return GraveDataPacket(position=self.get_motor_extension(), latch=self.get_latch_state())
+        return GraveDataPacket(ejecting_zombie=self.ejecting_zombie, latch=self.latch_state)

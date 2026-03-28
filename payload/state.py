@@ -6,10 +6,14 @@ import time
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 from payload.constants import (
     GRAVE_DEPLOY_LENGTH_SECONDS,
     LAUNCH_ACCELERATION_GS,
-    LAUNCH_STATE_LENGTH_SECONDS,
+    LAUNCH_STATE_CHECK_LENGTH_SECONDS,
+    LAUNCH_STATE_MAX_LENGTH_SECONDS,
+    TOTAL_OPERATION_TIME
 )
 
 if TYPE_CHECKING:
@@ -23,7 +27,7 @@ class State(ABC):
     After LandedState, Grave and Zombie diverge in which states they go into.
     """
 
-    __slots__ = ("context", "start_time_ns")
+    __slots__ = ("context", "start_time_ns",)
 
     def __init__(self, context: Context) -> None:
         self.context = context
@@ -85,19 +89,59 @@ class Launched(State):
     When the rocket has launched and it is in the air.
     """
 
-    __slots__ = ("_start_time",)
+    __slots__ = (
+        "_start_time",
+        "acceleration_difference",
+        "recent_acceleration",
+        "recent_acceleration_difference",
+    )
 
     def __init__(self, context: Context) -> None:
         super().__init__(context)
         self._start_time = time.monotonic()
+        self.context.launch_time_seconds = (
+            context.context_data_packet.update_timestamp_ns / 1_000_000_000
+        )
+        self.recent_acceleration: list[float] = []
+        self.recent_acceleration_difference: list[float] = []
+        self.acceleration_difference: float = 1
 
     def update(self) -> None:
         """
         Check if enough time has elapsed since launch to say we've landed.
         """
+        # Check to see if the descent time for main at crapogee has passed
         elapsed = time.monotonic() - self._start_time
-        if elapsed >= LAUNCH_STATE_LENGTH_SECONDS:
+        if elapsed >= LAUNCH_STATE_MAX_LENGTH_SECONDS:
             self.next_state()
+
+        # Append the recent acceleration data from firm
+        self.recent_acceleration.extend([(
+            (
+                (item.raw_acceleration_z_gs**2)
+                + (item.raw_acceleration_y_gs**2)
+                + (item.raw_acceleration_x_gs**2)
+            )
+            ** 0.5
+        )
+        for item in self.context.firm_data_packets[-500:]])
+
+        # Trim list to save data and processing power
+        self.recent_acceleration = self.recent_acceleration[-500:]
+
+        # Check if landed after time for nominal flight
+        if (
+            (elapsed >= LAUNCH_STATE_CHECK_LENGTH_SECONDS)
+            and (len(self.recent_acceleration) >= 500)
+            and (self.context.most_recent_firm_data_packet.est_position_z_meters < 5)
+        ):
+            self.recent_acceleration_difference = [
+                abs(item - 1.0) for item in self.recent_acceleration
+            ]
+            if (all(item <= 0.03 for item in self.recent_acceleration_difference)
+                and np.std(self.recent_acceleration_difference) < 0.005):
+                self.next_state()
+
 
     def next_state(self) -> None:
         self.context.state = LandedState(self.context)
@@ -116,6 +160,7 @@ class LandedState(State):
         # If this is zombie, we're just going to set a timer to move on to the next state
         if self.context.zombie:
             self._start_time = time.monotonic()
+            self.context.landing_time_seconds = self._start_time
 
     def update(self) -> None:
         """
@@ -162,40 +207,45 @@ class DeployZombieState(State):
 
 
 class ZombieDeployedState(State):
-    """
-    When the rocket has deployed the zombie.
-    """
+    """When the zombie has been deployed, but has not yet started drilling."""
 
-    __slots__ = ()
+    __slots__ = ("_deploy_started",)
+
+    def __init__(self, context: Context) -> None:
+        super().__init__(context)
+        self._deploy_started = False
 
     def update(self) -> None:
-        """
-        Orients zombie to be standing up properly.
-        """
-        # TODO: call some method in context that moves the legs and stands zombie up
-        # TODO: write code to detect if zombie is oriented correctly and legs are deployed, then go
-        #  to next state
+        if not self._deploy_started:
+            self.context.deploy_zombie_legs()
+            self._deploy_started = True
+        elif self.context.is_legs_deployed:
+            self.next_state()
 
     def next_state(self) -> None:
         self.context.state = ZombieDrillingState(self.context)
 
 
 class ZombieDrillingState(State):
-    """
-    When the rocket has stood the zombie lander up.
-    """
+    """When the zombie is drilling and collecting soil samples."""
 
-    __slots__ = ()
+    __slots__ = ("_drilling_started",)
+
+    def __init__(self, context: Context) -> None:
+        super().__init__(context)
+        self._drilling_started = False
 
     def update(self) -> None:
-        """
-        Drills to collect the soil sample.
-        """
-        # TODO: call some method in context to do the drilling
-        # TODO: write code to detect if the soil has been collected
+        elapsed = time.monotonic() - self.context.landing_time_seconds
+        if not self._drilling_started:
+            self.context.start_zombie_drilling()
+            self._drilling_started = True
+        # replace with a real "sample collected" check when ready
+        elif elapsed >= TOTAL_OPERATION_TIME:
+            self.next_state()
 
     def next_state(self) -> None:
-        pass
+        self.context.state = ZombieSampleCollectedState(self.context)
 
 
 class ZombieSampleCollectedState(State):

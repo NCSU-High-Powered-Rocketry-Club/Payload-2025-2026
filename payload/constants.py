@@ -1,5 +1,5 @@
 """The constants for the payload."""
-
+from enum import StrEnum
 from pathlib import Path
 
 # ------------------------ FIRM constants ------------------------
@@ -11,8 +11,10 @@ SERIAL_TIMEOUT_SECONDS = 1.0
 # ------------------------ State machine constants ------------------------
 LAUNCH_ALTITUDE_METERS = 200
 LAUNCH_ACCELERATION_GS = 5
-LAUNCH_STATE_LENGTH_SECONDS = 345  # Lauren said main at crapogee would result in this descent time
-GRAVE_DEPLOY_LENGTH_SECONDS = 10
+LAUNCH_STATE_MAX_LENGTH_SECONDS = 345  # Lauren said main at crapogee would result in this descent time
+LAUNCH_STATE_CHECK_LENGTH_SECONDS = 90
+GRAVE_DEPLOY_LENGTH_SECONDS = 90
+TOTAL_OPERATION_TIME = 900
 
 # ------------------------ Logger constants------------------------
 LOGS_PATH = Path("logs")
@@ -35,3 +37,15 @@ STOP_SIGNAL = "STOP"
 The signal to stop the IMU, Logger, and ApogeePredictor thread, this will be put in the queue to
 stop the threads.
 """
+
+# ------------------------ Display Configuration ------------------------
+
+class DisplayEndingType(StrEnum):
+    """Enum that represents the different ways the display can end."""
+
+    NATURAL = "natural"
+    """The display ends naturally, when the payload finishes, in a mock replay."""
+    INTERRUPTED = "interrupted"
+    """The display ends because the user interrupted the program."""
+    TAKEOFF = "takeoff"
+    """The display ends because the rocket took off, in a real launch."""
