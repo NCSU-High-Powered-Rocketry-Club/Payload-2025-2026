@@ -59,13 +59,12 @@ class StandbyState(State):
     When the rocket is on the launch rail on the ground.
     """
 
-    __slots__ = ()
-
-    def update(self) -> None:
-        """
-        Checks if the rocket has launched, based on our altitude.
-        """
-        # If accelerate above 5Gs, we have launched. This is a very delayed, but very safe check.
+#    __slots__ = ()
+#     def update(self) -> None:
+#        """
+#        Checks if the rocket has launched, based on our altitude.
+#        """
+#        # If accelerate above 5Gs, we have launched. This is a very delayed, but very safe check.
 #
 #         if (
 #             self.context.most_recent_firm_data_packet
@@ -90,24 +89,24 @@ class StandbyState(State):
 #     When the rocket has launched and it is in the air.
 #     """
 
-#     __slots__ = (
-#         "_start_time",
-#         "acceleration_difference",
-#         "recent_acceleration",
-#         "recent_acceleration_difference",
-#     )
+    __slots__ = (
+          "_start_time",
+         "acceleration_difference",
+         "recent_acceleration",
+         "recent_acceleration_difference",
+    )
 
-#     def __init__(self, context: Context) -> None:
-#         super().__init__(context)
-#         self._start_time = time.monotonic()
-#         self.context.launch_time_seconds = (
-#             context.context_data_packet.update_timestamp_ns / 1_000_000_000
-#         )
-#         self.recent_acceleration: list[float] = []
-#         self.recent_acceleration_difference: list[float] = []
-#         self.acceleration_difference: float = 1
+    def __init__(self, context: Context) -> None:
+         super().__init__(context)
+         self._start_time = time.monotonic()
+         self.context.launch_time_seconds = (
+             context.context_data_packet.update_timestamp_ns / 1_000_000_000
+         )
+         self.recent_acceleration: list[float] = []
+         self.recent_acceleration_difference: list[float] = []
+         self.acceleration_difference: float = 1
 
-    # def update(self) -> None:
+    def update(self) -> None:
         """
         Check if enough time has elapsed since launch to say we've landed.
         # """
