@@ -13,7 +13,7 @@ from payload.constants import (
     LAUNCH_ACCELERATION_GS,
     LAUNCH_STATE_CHECK_LENGTH_SECONDS,
     LAUNCH_STATE_MAX_LENGTH_SECONDS,
-    TOTAL_OPERATION_TIME,
+    TOTAL_OPERATION_TIME
 )
 
 if TYPE_CHECKING:
@@ -55,15 +55,34 @@ class State(ABC):
 
 
 class StandbyState(State):
-    """When the rocket is on the launch rail on the ground."""
+    """
+    When the rocket is on the launch rail on the ground.
+    """
 
     __slots__ = ()
 
     def update(self) -> None:
-        pass  # or re-enable the launch detection logic above
+        """
+        Checks if the rocket has launched, based on our altitude.
+        """
+        # If accelerate above 5Gs, we have launched. This is a very delayed, but very safe check.
+        if (
+            self.context.most_recent_firm_data_packet
+            and (
+                (
+                    (self.context.most_recent_firm_data_packet.raw_acceleration_z_gs**2)
+                    + (self.context.most_recent_firm_data_packet.raw_acceleration_y_gs**2)
+                    + (self.context.most_recent_firm_data_packet.raw_acceleration_x_gs**2)
+                )
+                ** 0.5
+            )
+            > LAUNCH_ACCELERATION_GS
+        ):
+            self.next_state()
 
-    def next_state(self) -> None:
-        self.context.state = LandedState(self.context)  # or Launched if you restore it
+    def next_state(self):
+        self.context.state = Launched(self.context)
+
 
 class Launched(State):
     """
@@ -90,7 +109,7 @@ class Launched(State):
     def update(self) -> None:
         """
         Check if enough time has elapsed since launch to say we've landed.
-        # """
+        """
         # Check to see if the descent time for main at crapogee has passed
         elapsed = time.monotonic() - self._start_time
         if elapsed >= LAUNCH_STATE_MAX_LENGTH_SECONDS:

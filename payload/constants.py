@@ -10,7 +10,7 @@ SERIAL_TIMEOUT_SECONDS = 1.0
 
 # ------------------------ State machine constants ------------------------
 LAUNCH_ALTITUDE_METERS = 200
-LAUNCH_ACCELERATION_GS = 5
+LAUNCH_ACCELERATION_GS = 1.5
 LAUNCH_STATE_MAX_LENGTH_SECONDS = 345  # Lauren said main at crapogee would result in this descent time
 LAUNCH_STATE_CHECK_LENGTH_SECONDS = 90
 GRAVE_DEPLOY_LENGTH_SECONDS = 135
