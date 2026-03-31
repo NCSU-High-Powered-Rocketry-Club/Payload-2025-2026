@@ -5,7 +5,6 @@ import platform
 
 # Imports only if running on Raspberry Pi
 if platform.system() == 'Linux':
-    
     # Servo Imports
     from gpiozero import AngularServo, Device
     from gpiozero.pins.pigpio import PiGPIOFactory
@@ -143,9 +142,9 @@ class Grave(BaseGrave):
         self.latch_state = True
         time.sleep(2)
         self.ejecting_zombie = True
-        self.lead_screw.move(470, direction="extend")  # mm
-        time.sleep(5)
-        self.lead_screw.move(120, direction="retract")  # mm
+        self.lead_screw.move(200, direction="extend")  # mm
+        # time.sleep(5)
+        # self.lead_screw.move(120, direction="retract")  # mm
 
     def get_data_packet(self):
         return GraveDataPacket(ejecting_zombie=self.ejecting_zombie, latch=self.latch_state)
