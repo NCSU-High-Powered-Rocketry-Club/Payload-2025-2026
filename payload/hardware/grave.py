@@ -66,7 +66,7 @@ class LeadScrewDriver:
     """Driver for the lead screw."""
 
     def __init__(self, dir_pin=None, step_pin=None, slp_pin=None):
-        
+
         dir_pin = dir_pin or board.D27
         step_pin = step_pin or board.D17
         slp_pin = slp_pin or board.D22
@@ -116,7 +116,7 @@ class Grave(BaseGrave):
     High-level controller for the Grave deployment system.
     """
 
-    __slots__ = ("deployed", "latch_state", "lead_screw", "ejecting_zombie", "servo")
+    __slots__ = ("deployed", "ejecting_zombie", "latch_state", "lead_screw", "servo")
 
     def __init__(self):
         self.servo = ServoDriver()

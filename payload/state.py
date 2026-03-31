@@ -13,7 +13,7 @@ from payload.constants import (
     LAUNCH_ACCELERATION_GS,
     LAUNCH_STATE_CHECK_LENGTH_SECONDS,
     LAUNCH_STATE_MAX_LENGTH_SECONDS,
-    TOTAL_OPERATION_TIME
+    TOTAL_OPERATION_TIME,
 )
 
 if TYPE_CHECKING:
@@ -66,50 +66,51 @@ class StandbyState(State):
         Checks if the rocket has launched, based on our altitude.
         """
         # If accelerate above 5Gs, we have launched. This is a very delayed, but very safe check.
-        if (
-            self.context.most_recent_firm_data_packet
-            and (
-                (
-                    (self.context.most_recent_firm_data_packet.raw_acceleration_z_gs**2)
-                    + (self.context.most_recent_firm_data_packet.raw_acceleration_y_gs**2)
-                    + (self.context.most_recent_firm_data_packet.raw_acceleration_x_gs**2)
-                )
-                ** 0.5
-            )
-            > LAUNCH_ACCELERATION_GS
-        ):
-            self.next_state()
+#
+#         if (
+#             self.context.most_recent_firm_data_packet
+#             and (
+#                 (
+#                     (self.context.most_recent_firm_data_packet.raw_acceleration_z_gs**2)
+#                     + (self.context.most_recent_firm_data_packet.raw_acceleration_y_gs**2)
+#                     + (self.context.most_recent_firm_data_packet.raw_acceleration_x_gs**2)
+#                 )
+#                 ** 0.5
+#             )
+#             > LAUNCH_ACCELERATION_GS
+#         ):
+#             self.next_state()
 
-    def next_state(self):
-        self.context.state = Launched(self.context)
+#     def next_state(self):
+#         self.context.state = Launched(self.context)
 
 
-class Launched(State):
-    """
-    When the rocket has launched and it is in the air.
-    """
+# class Launched(State):
+#     """
+#     When the rocket has launched and it is in the air.
+#     """
 
-    __slots__ = (
-        "_start_time",
-        "acceleration_difference",
-        "recent_acceleration",
-        "recent_acceleration_difference",
-    )
+#     __slots__ = (
+#         "_start_time",
+#         "acceleration_difference",
+#         "recent_acceleration",
+#         "recent_acceleration_difference",
+#     )
 
-    def __init__(self, context: Context) -> None:
-        super().__init__(context)
-        self._start_time = time.monotonic()
-        self.context.launch_time_seconds = (
-            context.context_data_packet.update_timestamp_ns / 1_000_000_000
-        )
-        self.recent_acceleration: list[float] = []
-        self.recent_acceleration_difference: list[float] = []
-        self.acceleration_difference: float = 1
+#     def __init__(self, context: Context) -> None:
+#         super().__init__(context)
+#         self._start_time = time.monotonic()
+#         self.context.launch_time_seconds = (
+#             context.context_data_packet.update_timestamp_ns / 1_000_000_000
+#         )
+#         self.recent_acceleration: list[float] = []
+#         self.recent_acceleration_difference: list[float] = []
+#         self.acceleration_difference: float = 1
 
-    def update(self) -> None:
+    # def update(self) -> None:
         """
         Check if enough time has elapsed since launch to say we've landed.
-        """
+        # """
         # Check to see if the descent time for main at crapogee has passed
         elapsed = time.monotonic() - self._start_time
         if elapsed >= LAUNCH_STATE_MAX_LENGTH_SECONDS:
