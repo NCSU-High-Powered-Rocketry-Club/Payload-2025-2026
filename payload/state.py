@@ -13,7 +13,7 @@ from payload.constants import (
     LAUNCH_ACCELERATION_GS,
     LAUNCH_STATE_CHECK_LENGTH_SECONDS,
     LAUNCH_STATE_MAX_LENGTH_SECONDS,
-    TOTAL_OPERATION_TIME
+    TOTAL_OPERATION_TIME,
 )
 
 if TYPE_CHECKING:
@@ -99,9 +99,7 @@ class Launched(State):
     def __init__(self, context: Context) -> None:
         super().__init__(context)
         self._start_time = time.monotonic()
-        self.context.launch_time_seconds = (
-            context.context_data_packet.update_timestamp_ns / 1_000_000_000
-        )
+        self.context.launch_time_seconds = self._start_time
         self.recent_acceleration: list[float] = []
         self.recent_acceleration_difference: list[float] = []
         self.acceleration_difference: float = 1

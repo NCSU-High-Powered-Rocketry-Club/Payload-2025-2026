@@ -42,6 +42,7 @@ class Context:
         "firm_data_packets",
         "grave",
         "grave_data_packet",
+        "landing_time_seconds",
         "launch_time_seconds",
         "logger",
         "max_acceleration",
@@ -49,8 +50,7 @@ class Context:
         "state",
         "total_acceleration",
         "zombie",
-        "zombie_data_packet",
-        "landing_time_seconds"
+        "zombie_data_packet"
     )
 
     def __init__(
@@ -125,7 +125,7 @@ class Context:
         """
         Deploys Zombie out of the rocket. This method should only be called if code is Grave.
         """
-        self._deploy_thread = self._run_in_thread(self.grave.deploy_zombie(), "Deploy Zombie Thread")
+        self._deploy_thread = self._run_in_thread(self.grave.deploy_zombie, "Deploy Zombie Thread")
 
     @property
     def is_deploy_complete(self) -> bool:

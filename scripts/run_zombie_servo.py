@@ -54,7 +54,7 @@ class INJORAServoDriver:
         self.spin(duration, speed=-abs(speed))
 
 try:
-    servo = INJORAServo(pin=23)
+    servo = INJORAServoDriver(pin=23)
     print("Spinning forward at full speed for 3 seconds...")
     servo.spin_forward(duration=3, speed=1.0)
 

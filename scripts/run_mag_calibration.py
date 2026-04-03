@@ -1,11 +1,11 @@
 import firm_client
 
-from payload.constants import FIRM_PORT
+from payload.constants import PORT
 
 import threading
 import time
 
-client = firm_client.FIRMClient(FIRM_PORT)
+client = firm_client.FIRMClient(PORT)
 client.start()
 
 

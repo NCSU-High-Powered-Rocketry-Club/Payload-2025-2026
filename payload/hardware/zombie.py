@@ -16,18 +16,20 @@ from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket
 class Zombie(BaseZombie):
     """A class representing a zombie payload."""
 
-    __slots__ = ("soil_data", "activating_legs", "checking_orientation")
+    __slots__ = ("activating_legs", "checking_orientation", "soil_data")
 
     def __init__(self):
-        pass
+        self.activating_legs = 0
+        self.checking_orientation = 0
+        self.soil_data = 0
+
 
     def deploy_legs(self) -> None:
         """
         Deploys the legs of the zombie to stand it up.
         """
-        
         self.activating_legs = True
-        
+
         try:
             servo = INJORAServoDriver(pin=16)
             servo.spin_forward(duration=10, speed=1.0)
@@ -62,9 +64,8 @@ class Zombie(BaseZombie):
 
         :return: True if the zombie is upright, False otherwise.
         """
-        
         self.checking_orientation = True
-        
+
         return True
 
     def get_soil_data(self):
@@ -73,8 +74,12 @@ class Zombie(BaseZombie):
 
     def get_data_packet(self):
         """Get the data packet for zombie. This will involve firm data and soil sensor data."""
-        return ZombieDataPacket(soil_info=self.get_soil_data(), activating_legs=self.activating_legs, checking_orientation=self.checking_orientation)
-    
+        return ZombieDataPacket(
+            soil_info=self.get_soil_data(),
+            activating_legs=self.activating_legs,
+            checking_orientation=self.checking_orientation
+            )
+
     def start(self) -> None:
         """Starts the zombie for processing data packets."""
 
