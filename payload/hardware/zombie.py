@@ -6,7 +6,7 @@ import time
 
 # Import only if on Raspberry Pi
 if platform.system() == "Linux":
-    from adafruit_circuitpython_ina260  import adafruit_ina260
+    import adafruit_ina260
     import board
     import busio
     import pigpio
@@ -86,12 +86,6 @@ class Zombie(BaseZombie):
         finally:
             servo.stop()
 
-
-        servo = INJORAServoDriver(pin=LEG_SERVO_PIN)
-        try:
-            servo.spin_forward(duration=60, speed=1.0)
-        finally:
-            servo.stop()
 
     # --------------------------------------------------
     # Drilling
@@ -306,13 +300,13 @@ class INJORAServoDriver:
         """Spin forward for a given duration. Speed from 0.0 to 1.0."""
         if speed < 0:
             raise ValueError("Use spin_reverse() for reverse rotation")
-        self.spin(duration, speed=-abs(speed))
+        self.spin(duration, speed=abs(speed))
 
     def spin_reverse(self, duration, speed=1.0):
         """Spin in reverse for a given duration. Speed from 0.0 to 1.0."""
         if speed < 0:
             raise ValueError("Speed must be a positive value (0.0 to 1.0)")
-        self.spin(duration, speed=abs(speed))
+        self.spin(duration, speed=-abs(speed))
 
 
 # ==================================================
