@@ -161,6 +161,7 @@ class Context:
 
     def _drilling_sequence(self):
         self.zombie.start_drilling()
+        self.zombie.retract_with_motor()
         self.zombie.start_soil_sensor()
         self.zombie.stop_drilling()
 
