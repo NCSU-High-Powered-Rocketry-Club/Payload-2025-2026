@@ -30,7 +30,7 @@ AUGER_MAX_PULSE = 2500      # µs — full forward
 AUGER_RUN_TIME = 3.0        # seconds to run auger servo
 
 # Planetary gear motor (pigpio DMA PWM — works on any GPIO)
-DRILL_MOTOR_PWM_PIN = 32    # GPIO 32
+DRILL_MOTOR_PWM_PIN = 12    # GPIO 12 Pin 32
 DRILL_MOTOR_FREQ = 50       # Hz
 DRILL_MOTOR_STOP_DC = 7.5   # % duty cycle — stop
 DRILL_MOTOR_RUN_DC = 8.5    # % duty cycle — forward rotation
