@@ -8,8 +8,8 @@ def main():
     print("Initializing hardware drivers...")
     zombie = Zombie()
 
-    print("Deploying Legs (hardware test)...")
-    zombie.deploy_legs()
+    print("Retracting Legs (hardware test)...")
+    zombie.retract_legs()
 
     print("Hardware test complete.")
 
