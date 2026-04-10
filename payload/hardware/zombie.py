@@ -6,7 +6,7 @@ import time
 
 # Import only if on Raspberry Pi
 if platform.system() == "Linux":
-    import adafruit_ina260
+    from adafruit_circuitpython_ina260 import adafruit_ina260
     import board
     import busio
     import pigpio
@@ -417,7 +417,7 @@ class INA260CurrentSensor:
     """
 
     def __init__(self):
-        i2c = busio.I2C(board.SCL, board.SDA)
+        i2c = board.I2C()  # automatically selects the correct hardware I2C bus
         self._sensor = adafruit_ina260.INA260(i2c)
 
     def read_current(self) -> float:
