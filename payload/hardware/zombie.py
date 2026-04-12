@@ -24,16 +24,16 @@ from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket
 
 # 5-turn auger servo (pigpio DMA PWM — works on any GPIO)
 AUGER_SERVO_PIN = 23        # GPIO 23, Pin 16
-AUGER_MIN_PULSE = 500       # µs — full reverse
+AUGER_MIN_PULSE = 1400       # µs — full reverse
 AUGER_MID_PULSE = 1500      # µs — stop
-AUGER_MAX_PULSE = 2500      # µs — full forward
-AUGER_RUN_TIME = 3.0        # seconds to run auger servo
+AUGER_MAX_PULSE = 1600      # µs — full forward
+AUGER_RUN_TIME = 1.0        # seconds to run auger servo
 
 # Planetary gear motor (pigpio DMA PWM — works on any GPIO)
 DRILL_MOTOR_PWM_PIN = 12    # GPIO 12 Pin 32
 DRILL_MOTOR_FREQ = 50       # Hz
 DRILL_MOTOR_STOP_DC = 7.5   # % duty cycle — stop
-DRILL_MOTOR_RUN_DC = 8.5    # % duty cycle — forward rotation
+DRILL_MOTOR_RUN_DC = 6.5    # % duty cycle — forward rotation. 8.5 originally, changing to 6.5 to go the right way
 
 # Modbus soil sensor
 MODBUS_PORT = "/dev/ttyUSB0"
@@ -41,6 +41,7 @@ MODBUS_BAUD = 9600
 
 # Leg servo (INJORA, gpiozero)
 LEG_SERVO_PIN = 13
+LEG_TIME = 5
 
 
 # ==================================================
@@ -70,7 +71,7 @@ class Zombie(BaseZombie):
 
         servo = INJORAServoDriver(pin=LEG_SERVO_PIN)
         try:
-            servo.spin_forward(duration=60, speed=1.0)
+            servo.spin_forward(duration=LEG_TIME, speed=1.0)
         finally:
             servo.stop()
 
@@ -82,7 +83,7 @@ class Zombie(BaseZombie):
 
         servo = INJORAServoDriver(pin=LEG_SERVO_PIN)
         try:
-            servo.spin_reverse(duration=60, speed=1.0)
+            servo.spin_reverse(duration=LEG_TIME, speed=1.0)
         finally:
             servo.stop()
 
@@ -428,13 +429,17 @@ class INA260CurrentSensor:
 
     Enable I2C with: sudo raspi-config -> Interface Options -> I2C -> Enable
     """
-
     def __init__(self):
-        i2c = board.I2C()  # automatically selects the correct hardware I2C bus
-        self._sensor = adafruit_ina260.INA260(i2c)
+        try:
+            i2c = board.I2C()
+            self._sensor = adafruit_ina260.INA260(i2c)
+        except Exception as e:
+            print(f"INA260 init failed: {e}")
+            self._sensor = NONE
 
     def read_current(self) -> float:
-        """Return current draw in milliamps (mA)."""
+        if self._sensor is None:
+            return 0.0
         return self._sensor.current
 
     def read_voltage(self) -> float:

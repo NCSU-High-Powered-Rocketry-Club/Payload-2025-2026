@@ -33,7 +33,7 @@ def main():
 
     # 5. Drill retracting - retracts auger while keeping planetary motor running
     print("\n[5/6] Starting drill retracting sequence...")
-    zombie.start_drill_retracting()
+    zombie.retract_with_motor()
     print("      Drill retracting complete.")
 
     # 6. Read soil sensor for full timed session
