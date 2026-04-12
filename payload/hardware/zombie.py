@@ -8,12 +8,12 @@ import time
 if platform.system() == "Linux":
     import adafruit_ina260
     import board
-    import busio
-    import pigpio
     from gpiozero import Servo
     from gpiozero.devices import Device
     from gpiozero.pins.pigpio import PiGPIOFactory
     from pymodbus.client import ModbusSerialClient
+
+    import pigpio
 
 from payload.base_classes.base_zombie import BaseZombie
 from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket
@@ -24,16 +24,14 @@ from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket
 
 # 5-turn auger servo (pigpio DMA PWM — works on any GPIO)
 AUGER_SERVO_PIN = 23        # GPIO 23, Pin 16
-AUGER_MIN_PULSE = 1400       # µs — full reverse
-AUGER_MID_PULSE = 1500      # µs — stop
-AUGER_MAX_PULSE = 1600      # µs — full forward
-AUGER_RUN_TIME = 1.0        # seconds to run auger servo
+RETRACTED_PW = 500          # us pulse width for start position, retracted
+EXTENDED_PW = 1270          # us pulse width for fully extended position
 
 # Planetary gear motor (pigpio DMA PWM — works on any GPIO)
 DRILL_MOTOR_PWM_PIN = 12    # GPIO 12 Pin 32
 DRILL_MOTOR_FREQ = 50       # Hz
 DRILL_MOTOR_STOP_DC = 7.5   # % duty cycle — stop
-DRILL_MOTOR_RUN_DC = 6.5    # % duty cycle — forward rotation. 8.5 originally, changing to 6.5 to go the right way
+DRILL_MOTOR_RUN_DC = 6.5    # % duty cycle — forward rotation
 
 # Modbus soil sensor
 MODBUS_PORT = "/dev/ttyUSB0"
@@ -87,61 +85,33 @@ class Zombie(BaseZombie):
         finally:
             servo.stop()
 
-
     # --------------------------------------------------
     # Drilling
     # --------------------------------------------------
 
-    def start_drilling(self) -> None:
+    def start_drilling(self, step=2, delay=0.02) -> None:
         """
-        Advances the auger and spins the planetary motor simultaneously.
-        Both run for AUGER_RUN_TIME seconds, then both stop.
-        """
-        auger = AugerServoDriver(pin=AUGER_SERVO_PIN)
-        drill = PlanetaryDrillMotor(pwm_pin=DRILL_MOTOR_PWM_PIN)
-        current_sensor = INA260CurrentSensor()
-
-        try:
-            auger_thread = threading.Thread(
-                target=auger.advance,
-                kwargs={"duration": AUGER_RUN_TIME}
-            )
-            drill_thread = threading.Thread(
-                target=drill.rotate_with_current_log,
-                kwargs={"duration": AUGER_RUN_TIME, "current_sensor": current_sensor}
-            )
-
-            auger_thread.start()
-            drill_thread.start()
-
-            auger_thread.join()
-            drill_thread.join()
-        finally:
-            auger.stop()
-            drill.stop()
-            drill.cleanup()
-
-    def retract_with_motor(self, retract_duration=AUGER_RUN_TIME) -> None:
-        """
-        Retracts the auger while keeping the planetary motor spinning forward.
-        Useful for pulling the drill bit back out of the soil after sampling.
-
-        Both run for *retract_duration* seconds simultaneously, then both stop.
-
-        :param retract_duration: How long to retract (seconds). Defaults to AUGER_RUN_TIME.
+        Advances the auger, then retracts it, with the planetary motor
+        spinning throughout both phases. The drill duration matches the
+        total auger travel time (extend + retract).
         """
         auger = AugerServoDriver(pin=AUGER_SERVO_PIN)
         drill = PlanetaryDrillMotor(pwm_pin=DRILL_MOTOR_PWM_PIN)
         current_sensor = INA260CurrentSensor()
 
+        # Each phase takes the same amount of time, so total drill duration is 2x
+        phase_duration = ((EXTENDED_PW - RETRACTED_PW) / step) * delay
+        total_drill_duration = phase_duration * 2
+
+        def auger_sequence():
+            auger.advance(step=step, delay=delay)
+            auger.retract(step=step, delay=delay)
+
         try:
-            auger_thread = threading.Thread(
-                target=auger.retract,
-                kwargs={"duration": retract_duration}
-            )
+            auger_thread = threading.Thread(target=auger_sequence)
             drill_thread = threading.Thread(
                 target=drill.rotate_with_current_log,
-                kwargs={"duration": retract_duration, "current_sensor": current_sensor}
+                kwargs={"duration": total_drill_duration, "current_sensor": current_sensor}
             )
 
             auger_thread.start()
@@ -157,8 +127,6 @@ class Zombie(BaseZombie):
     def stop_drilling(self) -> None:
         """
         Emergency stop for both the auger and planetary motor.
-        Note: start_drilling() and retract_with_motor() already stop
-        hardware when they finish normally.
         """
         auger = AugerServoDriver(pin=AUGER_SERVO_PIN)
         drill = PlanetaryDrillMotor(pwm_pin=DRILL_MOTOR_PWM_PIN)
@@ -321,7 +289,9 @@ class AugerServoDriver:
     pigpio's servo pulse control works on ANY GPIO pin, not just hardware
     PWM pins. It uses DMA to achieve ~1 us timing accuracy.
 
-    Pulse widths: 500 us (full reverse) / 1500 us (stop) / 2500 us (full forward).
+    Pulse widths map to position across 1800 degrees of travel:
+        RETRACTED_PW = 500 us  — fully retracted
+        EXTENDED_PW  = 1270 us — fully extended
     """
 
     def __init__(self, pin=AUGER_SERVO_PIN):
@@ -331,21 +301,25 @@ class AugerServoDriver:
             raise RuntimeError("Could not connect to pigpio daemon. "
                                "Run: sudo pigpiod")
 
-    def advance(self, duration=AUGER_RUN_TIME):
-        """Run auger forward (into soil) for *duration* seconds, then stop."""
-        print(f"Auger advancing for {duration} s")
-        self._pi.set_servo_pulsewidth(self._pin, AUGER_MAX_PULSE)
-        time.sleep(duration)
-        self._pi.set_servo_pulsewidth(self._pin, AUGER_MID_PULSE)
-        print("Auger stopped")
+    def advance(self, step=2, delay=0.02):
+        """Step from retracted to extended position."""
+        print("Auger extending")
+        current_pw = RETRACTED_PW
+        while current_pw < EXTENDED_PW:
+            current_pw = min(current_pw + step, EXTENDED_PW)
+            self._pi.set_servo_pulsewidth(self._pin, current_pw)
+            time.sleep(delay)
+        print("Auger extended")
 
-    def retract(self, duration=AUGER_RUN_TIME):
-        """Run auger in reverse (out of soil) for *duration* seconds, then stop."""
-        print(f"Auger retracting for {duration} s")
-        self._pi.set_servo_pulsewidth(self._pin, AUGER_MIN_PULSE)
-        time.sleep(duration)
-        self._pi.set_servo_pulsewidth(self._pin, AUGER_MID_PULSE)
-        print("Auger stopped")
+    def retract(self, step=2, delay=0.02):
+        """Step from extended back to retracted position."""
+        print("Auger retracting")
+        current_pw = EXTENDED_PW
+        while current_pw > RETRACTED_PW:
+            current_pw = max(current_pw - step, RETRACTED_PW)
+            self._pi.set_servo_pulsewidth(self._pin, current_pw)
+            time.sleep(delay)
+        print("Auger retracted")
 
     def stop(self):
         """Cut PWM signal to the auger servo and release pigpio resources."""
@@ -361,12 +335,9 @@ class PlanetaryDrillMotor:
     """
     Driver for the planetary gear motor using pigpio DMA-based PWM.
 
-    Switching from RPi.GPIO to pigpio lets us use GPIO 32 (or any
-    non-hardware-PWM pin) with stable, jitter-free pulse timing.
-
     The ESC/motor controller expects a standard RC servo signal:
         7.5% duty cycle at 50 Hz  ->  1500 us pulse  ->  stop
-        8.5% duty cycle at 50 Hz  ->  1700 us pulse  ->  forward
+        6.5% duty cycle at 50 Hz  ->  1300 us pulse  ->  forward
 
     pigpio works in pulse widths (us), converted from duty cycle:
         pulse_width_us = duty_cycle_pct / 100 * (1_000_000 / frequency)
@@ -374,7 +345,7 @@ class PlanetaryDrillMotor:
 
     # Pulse widths in us at 50 Hz (period = 20,000 us)
     _STOP_PW = int(DRILL_MOTOR_STOP_DC / 100 * (1_000_000 / DRILL_MOTOR_FREQ))  # 1500 us
-    _RUN_PW  = int(DRILL_MOTOR_RUN_DC  / 100 * (1_000_000 / DRILL_MOTOR_FREQ))  # 1700 us
+    _RUN_PW  = int(DRILL_MOTOR_RUN_DC  / 100 * (1_000_000 / DRILL_MOTOR_FREQ))  # 1300 us
 
     def __init__(self, pwm_pin=DRILL_MOTOR_PWM_PIN):
         self._pin = pwm_pin
@@ -382,11 +353,9 @@ class PlanetaryDrillMotor:
         if not self._pi.connected:
             raise RuntimeError("Could not connect to pigpio daemon. "
                                "Run: sudo pigpiod")
-        # Initialise to stop pulse
         self._pi.set_servo_pulsewidth(self._pin, self._STOP_PW)
 
-    def rotate_with_current_log(self, duration=AUGER_RUN_TIME,
-                                current_sensor=None):
+    def rotate_with_current_log(self, duration, current_sensor=None):
         """
         Spin the drill motor forward for *duration* seconds, logging current
         every 100 ms via the supplied INA260CurrentSensor instance.
@@ -429,13 +398,14 @@ class INA260CurrentSensor:
 
     Enable I2C with: sudo raspi-config -> Interface Options -> I2C -> Enable
     """
+
     def __init__(self):
         try:
             i2c = board.I2C()
             self._sensor = adafruit_ina260.INA260(i2c)
         except Exception as e:
             print(f"INA260 init failed: {e}")
-            self._sensor = NONE
+            self._sensor = None
 
     def read_current(self) -> float:
         if self._sensor is None:
@@ -443,11 +413,13 @@ class INA260CurrentSensor:
         return self._sensor.current
 
     def read_voltage(self) -> float:
-        """Return bus voltage in volts (V)."""
+        if self._sensor is None:
+            return 0.0
         return self._sensor.voltage
 
     def read_power(self) -> float:
-        """Return power in milliwatts (mW)."""
+        if self._sensor is None:
+            return 0.0
         return self._sensor.power
 
 
@@ -478,8 +450,6 @@ class ModbusSoilSensor:
     def disconnect(self):
         if self._client.connected:
             self._client.close()
-
-    # ---------- individual register reads ----------
 
     def read_moisture(self) -> str:
         result = self._client.read_holding_registers(
@@ -523,8 +493,6 @@ class ModbusSoilSensor:
             f"Potassium:  {k} mg/kg",
         ]
 
-    # ---------- combined read ----------
-
     def read_all(self) -> list[str]:
         """Return a formatted list of all sensor readings."""
         header = ["Soil Data", "-------------------------"]
@@ -549,4 +517,4 @@ def _print_data(data: list[str]) -> None:
 
 def _clear_screen(lines: int = 10) -> None:
     for _ in range(lines):
-        print("\033[F\033[K\r", end='')
+        print("\033[F\033[K\r", end="")
