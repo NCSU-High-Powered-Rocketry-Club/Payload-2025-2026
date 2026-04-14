@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from zoneinfo import ZoneInfo
 
+from payload.constants import DRILL_ATTEMPTS
 from payload.data_handling.packets.context_data_packet import ContextDataPacket
 from payload.data_handling.packets.grave_data_packet import GraveDataPacket
 from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket
@@ -160,8 +161,8 @@ class Context:
         self._drilling_thread = self._run_in_thread(self._drilling_sequence, "Drilling Thread")
 
     def _drilling_sequence(self):
-        self.zombie.start_drilling()
-        self.zombie.retract_with_motor()
+        for _i in range(DRILL_ATTEMPTS):
+            self.zombie.start_drilling()
         self.zombie.start_soil_sensor()
         self.zombie.stop_drilling()
 

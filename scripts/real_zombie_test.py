@@ -4,6 +4,7 @@ Real ZOMBIE hardware test — calls all Zombie methods in sequence.
 Run on the Pi with: uv run scripts/real_zombie_test.py
 """
 
+from payload.constants import DRILL_ATTEMPTS
 from payload.hardware.zombie import Zombie
 
 
@@ -28,7 +29,8 @@ def main():
 
     # 4. Drill — advances auger servo then spins planetary motor
     print("\n[4/5] Starting drilling sequence...")
-    zombie.start_drilling()
+    for _i in range(DRILL_ATTEMPTS):
+        zombie.start_drilling()
     print("      Drilling complete.")
 
     # 5. Read soil sensor for full timed session
