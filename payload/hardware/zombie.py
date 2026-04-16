@@ -411,6 +411,18 @@ class PlanetaryDrillMotor:
         # Ramp up
         for pw in range(self._STOP_PW, self._RUN_PW, -1):
             self._pi.set_servo_pulsewidth(self._pin, pw)
+            if current_sensor:
+                current_ma = current_sensor.read_current()
+                current_a = current_ma / 1000.0
+                print(f"  Current: {current_ma:.1f} mA")
+
+                if stall_threshold_a is not None and current_a > stall_threshold_a:
+                    print(f"  Stall detected! {current_a:.2f} A exceeds "
+                          f"{stall_threshold_a} A threshold. Stopping motor.")
+                    stalled = True
+                    if stall_event is not None:
+                        stall_event.set()
+                    break   # Exit the run loop immediately
             time.sleep(0.02)
 
         ramp_time = abs(self._STOP_PW - self._RUN_PW) * 0.02
@@ -433,13 +445,25 @@ class PlanetaryDrillMotor:
                         stall_event.set()
                     break   # Exit the run loop immediately
 
-            time.sleep(0.001)
+            time.sleep(0.02)
 
         # Ramp down (only if we didn't cut out early due to stall — if we
         # stalled the motor is already at stop; still safe to ramp from
         # wherever it is back to _STOP_PW)
         for pw in range(self._RUN_PW, self._STOP_PW):
             self._pi.set_servo_pulsewidth(self._pin, pw)
+            if current_sensor:
+                current_ma = current_sensor.read_current()
+                current_a = current_ma / 1000.0
+                print(f"  Current: {current_ma:.1f} mA")
+
+                if stall_threshold_a is not None and current_a > stall_threshold_a:
+                    print(f"  Stall detected! {current_a:.2f} A exceeds "
+                          f"{stall_threshold_a} A threshold. Stopping motor.")
+                    stalled = True
+                    if stall_event is not None:
+                        stall_event.set()
+                    break   # Exit the run loop immediately
             time.sleep(0.02)
 
         self._pi.set_servo_pulsewidth(self._pin, self._STOP_PW)
