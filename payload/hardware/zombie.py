@@ -33,6 +33,9 @@ DRILL_MOTOR_FREQ = 50       # Hz
 DRILL_MOTOR_STOP_DC = 7.5   # % duty cycle — stop
 DRILL_MOTOR_RUN_DC = 6.5    # % duty cycle — forward rotation
 
+# Stall detection
+STALL_CURRENT_THRESHOLD_A = 3.0   # amps — motor stops and auger retracts if exceeded
+
 # Modbus soil sensor
 MODBUS_PORT = "/dev/ttyUSB0"
 MODBUS_BAUD = 9600
@@ -91,35 +94,65 @@ class Zombie(BaseZombie):
 
     def start_drilling(self, step=2, delay=0.02) -> None:
         """
-        Advances the auger, then retracts it, with the planetary motor
-        spinning throughout both phases. The drill duration matches the
-        total auger travel time (extend + retract).
+        Advances the auger and spins the planetary motor simultaneously.
+
+        If the motor current exceeds STALL_CURRENT_THRESHOLD_A during a run,
+        the motor stops immediately and the auger retracts while the motor is
+        still. Once retracted, the attempt ends and — if attempts remain —
+        the sequence restarts from the top.
+
+        Each attempt counts toward max_attempts whether it completes normally
+        or stalls, preventing an endless retry loop.
+
+        :param step:         Pulse-width step size (us) for auger movement.
+        :param delay:        Delay (seconds) between each auger step.
         """
         auger = AugerServoDriver(pin=AUGER_SERVO_PIN)
         drill = PlanetaryDrillMotor(pwm_pin=DRILL_MOTOR_PWM_PIN)
         current_sensor = INA260CurrentSensor()
 
-        # Each phase takes the same amount of time, so total drill duration is 2x
         phase_duration = ((EXTENDED_PW - RETRACTED_PW) / step) * delay
         total_drill_duration = phase_duration * 2
 
+            # Shared event: motor thread sets this when a stall is detected.
+            # Auger thread checks it between advance and retract phases.
+        stall_event = threading.Event()
+
         def auger_sequence():
             auger.advance(step=step, delay=delay)
+            if stall_event.is_set():
+                print("Stall detected: retracting auger with motor stopped.")
             auger.retract(step=step, delay=delay)
 
-        try:
-            auger_thread = threading.Thread(target=auger_sequence)
-            drill_thread = threading.Thread(
-                target=drill.rotate_with_current_log,
-                kwargs={"duration": total_drill_duration, "current_sensor": current_sensor}
+        def drill_sequence():
+            stalled = drill.rotate_with_current_log(
+                duration=total_drill_duration,
+                current_sensor=current_sensor,
+                stall_event=stall_event,
+                stall_threshold_a=STALL_CURRENT_THRESHOLD_A,
             )
+            if stalled:
+                # Block here until the auger finishes retracting,
+                # so cleanup() isn't called while it's still moving.
+                auger_thread.join()
+
+        try:
+            auger_thread = threading.Thread(target=auger_sequence, daemon=True)
+            drill_thread = threading.Thread(target=drill_sequence, daemon=True)
 
             auger_thread.start()
             drill_thread.start()
 
             auger_thread.join()
             drill_thread.join()
+
+            if stall_event.is_set():
+                print("Drill attempt ended due to stall.")
+            else:
+                print("Drill attempt completed successfully.")
+
         finally:
+            # Always bring hardware to a safe state between attempts
             auger.stop()
             drill.stop()
             drill.cleanup()
@@ -355,30 +388,63 @@ class PlanetaryDrillMotor:
                                "Run: sudo pigpiod")
         self._pi.set_servo_pulsewidth(self._pin, self._STOP_PW)
 
-    def rotate_with_current_log(self, duration, current_sensor=None):
+    def rotate_with_current_log(
+        self,
+        duration: float,
+        current_sensor=None,
+        stall_event: threading.Event = None,
+        stall_threshold_a: float = None,
+    ) -> bool:
         """
-        Spin the drill motor forward for *duration* seconds, logging current
-        every 100 ms via the supplied INA260CurrentSensor instance.
+        Spin the drill motor for *duration* seconds, ramping up and down
+        smoothly. Monitors current every millisecond and stops immediately
+        if current exceeds *stall_threshold_a* amps.
+
+        :param duration:          Total run time in seconds (including ramps).
+        :param current_sensor:    INA260CurrentSensor instance for monitoring.
+        :param stall_event:       threading.Event set if a stall is detected.
+        :param stall_threshold_a: Current limit in amps. None disables stall detection.
+        :return:                  True if a stall was detected, False otherwise.
         """
         print("Planetary motor spinning")
-        for i in range(self._STOP_PW, self._RUN_PW, -1):
-            self._pi.set_servo_pulsewidth(self._pin, i)
+
+        # Ramp up
+        for pw in range(self._STOP_PW, self._RUN_PW, -1):
+            self._pi.set_servo_pulsewidth(self._pin, pw)
             time.sleep(0.02)
 
-       #  self._pi.set_servo_pulsewidth(self._pin, self._RUN_PW)
         ramp_time = abs(self._STOP_PW - self._RUN_PW) * 0.02
+        run_time = duration - (ramp_time * 2)
+        stalled = False
 
+        # Steady-state run with current monitoring
         start = time.time()
-        while (time.time() - start) < (duration - (ramp_time * 2)):
+        while (time.time() - start) < run_time:
             if current_sensor:
-                print(f"  Current: {current_sensor.read_current():.1f} mA")
+                current_ma = current_sensor.read_current()
+                current_a = current_ma / 1000.0
+                print(f"  Current: {current_ma:.1f} mA")
+
+                if stall_threshold_a is not None and current_a > stall_threshold_a:
+                    print(f"  Stall detected! {current_a:.2f} A exceeds "
+                          f"{stall_threshold_a} A threshold. Stopping motor.")
+                    stalled = True
+                    if stall_event is not None:
+                        stall_event.set()
+                    break   # Exit the run loop immediately
+
             time.sleep(0.001)
-        for i in range(self._RUN_PW, self._STOP_PW):
-            self._pi.set_servo_pulsewidth(self._pin, i)
+
+        # Ramp down (only if we didn't cut out early due to stall — if we
+        # stalled the motor is already at stop; still safe to ramp from
+        # wherever it is back to _STOP_PW)
+        for pw in range(self._RUN_PW, self._STOP_PW):
+            self._pi.set_servo_pulsewidth(self._pin, pw)
             time.sleep(0.02)
 
         self._pi.set_servo_pulsewidth(self._pin, self._STOP_PW)
         print("Planetary motor stopped")
+        return stalled
 
     def stop(self):
         """Return motor to neutral (stop) pulse width."""
@@ -416,16 +482,19 @@ class INA260CurrentSensor:
             self._sensor = None
 
     def read_current(self) -> float:
+        """Return current draw in milliamps (mA)."""
         if self._sensor is None:
             return 0.0
         return self._sensor.current
 
     def read_voltage(self) -> float:
+        """Return bus voltage in volts (V)."""
         if self._sensor is None:
             return 0.0
         return self._sensor.voltage
 
     def read_power(self) -> float:
+        """Return power in milliwatts (mW)."""
         if self._sensor is None:
             return 0.0
         return self._sensor.power
