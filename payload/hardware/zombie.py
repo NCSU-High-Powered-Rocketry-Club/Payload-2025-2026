@@ -361,13 +361,21 @@ class PlanetaryDrillMotor:
         every 100 ms via the supplied INA260CurrentSensor instance.
         """
         print("Planetary motor spinning")
-        self._pi.set_servo_pulsewidth(self._pin, self._RUN_PW)
+        for i in range(self._STOP_PW, self._RUN_PW, -1):
+            self._pi.set_servo_pulsewidth(self._pin, i)
+            time.sleep(0.02)
+
+       #  self._pi.set_servo_pulsewidth(self._pin, self._RUN_PW)
+        ramp_time = abs(self._STOP_PW - self._RUN_PW) * 0.02
 
         start = time.time()
-        while time.time() - start < duration:
+        while (time.time() - start) < (duration - (ramp_time * 2)):
             if current_sensor:
                 print(f"  Current: {current_sensor.read_current():.1f} mA")
-            time.sleep(0.1)
+            time.sleep(0.001)
+        for i in range(self._RUN_PW, self._STOP_PW):
+            self._pi.set_servo_pulsewidth(self._pin, i)
+            time.sleep(0.02)
 
         self._pi.set_servo_pulsewidth(self._pin, self._STOP_PW)
         print("Planetary motor stopped")

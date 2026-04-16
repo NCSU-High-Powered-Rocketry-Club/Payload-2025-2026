@@ -9,7 +9,7 @@ def main():
     zombie = Zombie()
 
     print("Retracting Legs (hardware test)...")
-    zombie.retract_legs()
+    zombie.deploy_legs()
 
     print("Hardware test complete.")
 
