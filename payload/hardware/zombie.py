@@ -3,6 +3,7 @@
 import platform
 import threading
 import time
+import math
 
 # Import only if on Raspberry Pi
 if platform.system() == "Linux":
@@ -32,6 +33,7 @@ DRILL_MOTOR_PWM_PIN = 12    # GPIO 12 Pin 32
 DRILL_MOTOR_FREQ = 50       # Hz
 DRILL_MOTOR_STOP_DC = 7.5   # % duty cycle — stop
 DRILL_MOTOR_RUN_DC = 6.5    # % duty cycle — forward rotation
+DRILL_MOTOR_REVERSE_DC = 8.5
 
 # Stall detection
 STALL_CURRENT_THRESHOLD_A = 3.0   # amps — motor stops and auger retracts if exceeded
@@ -385,6 +387,8 @@ class PlanetaryDrillMotor:
     # Pulse widths in us at 50 Hz (period = 20,000 us)
     _STOP_PW = int(DRILL_MOTOR_STOP_DC / 100 * (1_000_000 / DRILL_MOTOR_FREQ))  # 1500 us
     _RUN_PW  = int(DRILL_MOTOR_RUN_DC  / 100 * (1_000_000 / DRILL_MOTOR_FREQ))  # 1300 us
+    _REVERSE_PW = int(DRILL_MOTOR_REVERSE_DC / 100 * (1_000_000 / DRILL_MOTOR_FREQ))
+    _UNJAM_PW = math.floor((DRILL_MOTOR_REVERSE_DC + DRILL_MOTOR_STOP_DC) / 2)
 
     def __init__(self, pwm_pin=DRILL_MOTOR_PWM_PIN):
         self._pin = pwm_pin
@@ -405,14 +409,23 @@ class PlanetaryDrillMotor:
             return stall_event is not None and stall_event.is_set()
 
         # Ramp up
-        for pw in range(self._STOP_PW, self._RUN_PW, -1):
-            if should_stop():
-                break
-            self._pi.set_servo_pulsewidth(self._pin, pw)
-            time.sleep(0.02)
+        if should_stop():
+            for pw in range(self._STOP_PW, self._UNJAM_PW):
+                self._pi.set_servo_pulsewidth(self._pin, pw)
+                time.sleep(0.05)
+            ramp_time = abs(self._STOP_PW - self._UNJAM_PW) * 0.05
+            run_time = duration - (ramp_time * 2)
+        else:
+            for pw in range(self._STOP_PW, self._RUN_PW, -1):
+                self._pi.set_servo_pulsewidth(self._pin, pw)
+                time.sleep(0.02)
 
         # Steady-state run
-        if not should_stop():
+        if should_stop():
+            start = time.time()
+            while (time.time() - start) < run_time:
+                time.sleep(0.05)
+        else:
             ramp_time = abs(self._STOP_PW - self._RUN_PW) * 0.02
             run_time = duration - (ramp_time * 2)
             start = time.time()
@@ -422,11 +435,14 @@ class PlanetaryDrillMotor:
                 time.sleep(0.02)
 
         # Ramp down
-        for pw in range(self._RUN_PW, self._STOP_PW):
-            if should_stop():
-                break
-            self._pi.set_servo_pulsewidth(self._pin, pw)
-            time.sleep(0.02)
+        if should_stop():
+            for pw in range(self._STOP_PW, self._UNJAM_PW):
+                self._pi.set_servo_pulsewidth(self._pin, pw)
+                time.sleep(0.05)
+        else:
+            for pw in range(self._RUN_PW, self._STOP_PW):
+                self._pi.set_servo_pulsewidth(self._pin, pw)
+                time.sleep(0.02)
 
         self._pi.set_servo_pulsewidth(self._pin, self._STOP_PW)
         print("Planetary motor stopped")
