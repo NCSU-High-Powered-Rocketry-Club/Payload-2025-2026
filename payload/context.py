@@ -163,11 +163,14 @@ class Context:
     @property
     def is_oriented(self) -> bool:
         self.xy_orientation = ((self.most_recent_firm_data_packet.raw_acceleration_x_gs ** 2) + (self.most_recent_firm_data_packet.raw_acceleration_y_gs ** 2)) ** 0.5
-        if ((self.xy_orientation > 0.7)
-        and (self.most_recent_firm_data_packet.raw_acceleration_x_gs > 0)
-        and (self.most_recent_firm_data_packet.raw_acceleration_y_gs > 0)
+        if ((self.xy_orientation > 0.9)
+        and (self.most_recent_firm_data_packet.raw_acceleration_x_gs > 0.4)
+        and (self.most_recent_firm_data_packet.raw_acceleration_y_gs > 0.4)
         ):
             self.oriented = True
+        else:
+            self.oriented = False
+
         return self.oriented
 
     def start_zombie_drilling(self) -> None:
