@@ -48,10 +48,12 @@ class Context:
         "logger",
         "max_acceleration",
         "most_recent_firm_data_packet",
+        "oriented",
         "state",
         "total_acceleration",
+        "xy_orientation",
         "zombie",
-        "zombie_data_packet"
+        "zombie_data_packet",
     )
 
     def __init__(
@@ -78,6 +80,8 @@ class Context:
         self._legs_thread: threading.Thread | None = None
         self._drilling_thread: threading.Thread | None = None
         self.landing_time_seconds: int = 0
+        self.xy_orientation: float = 0
+        self.oriented: bool = False
 
     def start(self):
         self.firm.start()
@@ -156,6 +160,16 @@ class Context:
     def is_legs_deployed(self) -> bool:
         return self._legs_thread is not None and not self._legs_thread.is_alive()
 
+    @property
+    def is_oriented(self) -> bool:
+        self.xy_orientation = ((self.most_recent_firm_data_packet.raw_acceleration_x_gs ** 2) + (self.most_recent_firm_data_packet.raw_acceleration_y_gs ** 2)) ** 0.5
+        if ((self.xy_orientation > 0.7)
+        and (self.most_recent_firm_data_packet.raw_acceleration_x_gs > 0)
+        and (self.most_recent_firm_data_packet.raw_acceleration_y_gs > 0)
+        ):
+            self.oriented = True
+        return self.oriented
+
     def start_zombie_drilling(self) -> None:
         """Starts the drilling mechanism. Only called if this is Zombie."""
         self._drilling_thread = self._run_in_thread(self._drilling_sequence, "Drilling Thread")
@@ -163,7 +177,7 @@ class Context:
     def _drilling_sequence(self):
         sense_soil = False
 
-        while sense_soil:
+        while not sense_soil:
             for _i in range(DRILL_ATTEMPTS):
                 self.zombie.start_drilling()
             self.zombie.start_soil_sensor()
