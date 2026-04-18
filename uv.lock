@@ -323,19 +323,23 @@ name = "payload-2025-2026"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "adafruit-blinka" },
-    { name = "board" },
     { name = "colorama" },
     { name = "firm-client" },
-    { name = "gpio" },
-    { name = "gpiozero" },
     { name = "msgspec" },
     { name = "numpy" },
-    { name = "pigpio" },
     { name = "polars" },
+    { name = "tzdata" },
+]
+
+[package.optional-dependencies]
+pi = [
+    { name = "adafruit-blinka" },
+    { name = "board" },
+    { name = "gpio" },
+    { name = "gpiozero" },
+    { name = "pigpio" },
     { name = "raspi-gpio" },
     { name = "rpi-gpio" },
-    { name = "tzdata" },
     { name = "wiringpi" },
 ]
 
@@ -350,21 +354,22 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "adafruit-blinka", specifier = ">=9.0.4" },
-    { name = "board", specifier = ">=1.0" },
+    { name = "adafruit-blinka", marker = "extra == 'pi'", specifier = ">=9.0.4" },
+    { name = "board", marker = "extra == 'pi'", specifier = ">=1.0" },
     { name = "colorama", specifier = ">=0.4.6" },
-    { name = "firm-client", specifier = ">=1.2.1" },
-    { name = "gpio", specifier = ">=1.0.1" },
-    { name = "gpiozero", specifier = ">=2.0.1" },
+    { name = "firm-client", specifier = ">=1.2.2" },
+    { name = "gpio", marker = "extra == 'pi'", specifier = ">=1.0.1" },
+    { name = "gpiozero", marker = "extra == 'pi'", specifier = ">=2.0.1" },
     { name = "msgspec", specifier = ">=0.20.0" },
     { name = "numpy" },
-    { name = "pigpio", specifier = ">=1.78" },
+    { name = "pigpio", marker = "extra == 'pi'", specifier = ">=1.78" },
     { name = "polars" },
-    { name = "raspi-gpio", specifier = ">=0.1.9" },
-    { name = "rpi-gpio", specifier = ">=0.7.1" },
+    { name = "raspi-gpio", marker = "extra == 'pi'", specifier = ">=0.1.9" },
+    { name = "rpi-gpio", marker = "extra == 'pi'", specifier = ">=0.7.1" },
     { name = "tzdata" },
-    { name = "wiringpi", specifier = ">=2.60.1" },
+    { name = "wiringpi", marker = "extra == 'pi'", specifier = ">=2.60.1" },
 ]
+provides-extras = ["pi"]
 
 [package.metadata.requires-dev]
 dev = [
