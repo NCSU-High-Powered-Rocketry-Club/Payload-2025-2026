@@ -185,9 +185,9 @@ class FlightDisplay:
             f"Time (EST):                {G}{self._context.context_data_packet.epoch_time}{RESET}",
             f"Launch time:               {G}T+{time.strftime('%M:%S', time.gmtime(time_since_launch))}{RESET}",  # noqa: E501
             f"State:                     {G}{self._context.state.name:<15}{RESET}", # noqa: E501
-            f"Acceleration X:            {G}{self._context.most_recent_firm_data_packet.raw_rotated_acceleration_x_gs:<10.3f}{RESET} {R}G{RESET}",
-            f"Acceleration Y:            {G}{self._context.most_recent_firm_data_packet.raw_rotated_acceleration_y_gs:<10.3f}{RESET} {R}G{RESET}",
-            f"Acceleration Z:            {G}{self._context.most_recent_firm_data_packet.raw_rotated_acceleration_z_gs:<10.3f}{RESET} {R}G{RESET}",
+            f"Acceleration X:            {G}{self._context.most_recent_firm_data_packet.raw_acceleration_x_gs:<10.3f}{RESET} {R}G{RESET}",
+            f"Acceleration Y:            {G}{self._context.most_recent_firm_data_packet.raw_acceleration_y_gs:<10.3f}{RESET} {R}G{RESET}",
+            f"Acceleration Z:            {G}{self._context.most_recent_firm_data_packet.raw_acceleration_z_gs:<10.3f}{RESET} {R}G{RESET}",
             f"Altitude:                  {G}{self._context.most_recent_firm_data_packet.est_position_z_meters:<10.3f}{RESET} {R}m{RESET}", # noqa: E501
             f"Total Acceleration:        {G}{self._context.total_acceleration:<10.3f}{RESET} {R}G{RESET}", # noqa: E501
             f"Max Acceleration so far:   {G}{self._context.max_acceleration:<10.3}{RESET} {R}G{RESET}", # noqa: E501
