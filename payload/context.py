@@ -37,6 +37,7 @@ class Context:
     __slots__ = (
         "_deploy_thread",
         "_drilling_thread",
+        "_legs_retract_thread",
         "_legs_thread",
         "context_data_packet",
         "firm",
@@ -78,6 +79,7 @@ class Context:
         self.max_acceleration: float = 0
         self._deploy_thread: threading.Thread | None = None
         self._legs_thread: threading.Thread | None = None
+        self._legs_retract_thread: threading.Thread | None = None,
         self._drilling_thread: threading.Thread | None = None
         self.landing_time_seconds: int = 0
         self.xy_orientation: float = 0
@@ -159,6 +161,14 @@ class Context:
     @property
     def is_legs_deployed(self) -> bool:
         return self._legs_thread is not None and not self._legs_thread.is_alive()
+
+    def retract_zombie_legs(self) -> None:
+        """Something."""
+        self._legs_retract_thread = self._run_in_thread(self.zombie.retract_legs, "Retract Legs Thread")
+
+    @property
+    def is_legs_retracted(self) -> bool:
+        return self._legs_retract_thread is not None and not self._legs_retract_thread.is_alive()
 
     @property
     def is_oriented(self) -> bool:

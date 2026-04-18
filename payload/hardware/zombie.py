@@ -25,7 +25,7 @@ from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket
 
 # 5-turn auger servo (pigpio DMA PWM — works on any GPIO)
 AUGER_SERVO_PIN = 23        # GPIO 23, Pin 16
-RETRACTED_PW = 500          # us pulse width for start position, retracted
+RETRACTED_PW = 600          # us pulse width for start position, retracted
 EXTENDED_PW = 1270          # us pulse width for fully extended position
 
 # Planetary gear motor (pigpio DMA PWM — works on any GPIO)

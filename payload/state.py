@@ -207,17 +207,23 @@ class DeployZombieState(State):
 class ZombieDeployedState(State):
     """When the zombie has been deployed, but has not yet started drilling."""
 
-    __slots__ = ("_deploy_started",)
+    __slots__ = ("_deploy_started", "_first_deploy",)
 
     def __init__(self, context: Context) -> None:
         super().__init__(context)
         self._deploy_started = False
+        self._first_deploy = True
 
     def update(self) -> None:
         if not self._deploy_started:
-            self.context.deploy_zombie_legs()
-            self._deploy_started = True
-        elif self.context.is_legs_deployed:
+            if self._first_deploy or self.context.is_legs_retracted:
+                self.context.deploy_zombie_legs()
+                self._deploy_started = True
+        elif self.context.is_legs_deployed and not self.context.is_oriented:
+            self.context.retract_zombie_legs()
+            self._deploy_started = False
+            self._first_deploy = False
+        elif self.context.is_legs_deployed and self.context.is_oriented:
             self.next_state()
 
     def next_state(self) -> None:
