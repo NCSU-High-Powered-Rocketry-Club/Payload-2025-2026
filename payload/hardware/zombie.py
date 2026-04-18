@@ -59,7 +59,9 @@ class Zombie(BaseZombie):
     def __init__(self):
         self.activating_legs = 0
         self.checking_orientation = 0
-        self.soil_data = 0
+        self.nitrogen: float = 0
+        self.ph: float = 0
+        self.ec: float = 0
 
     # --------------------------------------------------
     # Leg Deployment
@@ -180,9 +182,7 @@ class Zombie(BaseZombie):
 
     def start_soil_sensor(self) -> None:
         """
-        Opens the Modbus connection to the soil sensor and runs a timed
-        readout loop, printing results to the console. Reads for 120 s
-        (480 samples x 0.25 s).
+        Opens the Modbus connection to the soil sensor and runs a loop that reads required data.
         """
         sensor = ModbusSoilSensor(port=MODBUS_PORT, baud=MODBUS_BAUD)
 
@@ -192,11 +192,12 @@ class Zombie(BaseZombie):
 
         try:
             print("Connected to Modbus RTU device.")
-            for _ in range(480):
-                data = sensor.read_all()
-                _clear_screen()
-                _print_data(data)
-                time.sleep(0.25)
+            while True:
+                data = sensor.read_nasa_data()
+                self.nitrogen = data[0]
+                self.ph = data[1]
+                self.ec = data[2]
+                time.sleep(0.01)
         finally:
             sensor.disconnect()
 
@@ -231,15 +232,16 @@ class Zombie(BaseZombie):
         if not sensor.connect():
             return None
         try:
-            return sensor.read_all()
+            return sensor.read_nasa_data()
         finally:
             sensor.disconnect()
 
     def get_data_packet(self):
         """Get the data packet for zombie. Includes soil sensor data."""
-        self.soil_data = self.get_soil_data()
         return ZombieDataPacket(
-            soil_info=self.soil_data,
+            nitrogen=self.nitrogen,
+            pH=self.ph,
+            electrical_conductivity=self.ec,
             activating_legs=self.activating_legs,
             checking_orientation=self.checking_orientation,
         )
@@ -529,60 +531,72 @@ class ModbusSoilSensor:
         if self._client.connected:
             self._client.close()
 
-    def read_moisture(self) -> str:
+    def read_moisture(self) -> float:
         result = self._client.read_holding_registers(
             address=0x12, count=1, device_id=1)
         if result.isError():
-            return "Moisture: error"
-        return f"Moisture: {result.registers[0] * 0.1:.1f}%"
+            return 0
+        return result.registers[0]
 
-    def read_temperature(self) -> str:
+    def read_temperature(self) -> float:
         result = self._client.read_holding_registers(
             address=0x13, count=1, device_id=1)
         if result.isError():
-            return "Temperature: error"
+            return 0
         temp_c = result.registers[0] * 0.1
-        temp_f = temp_c * 9 / 5 + 32
-        return f"Temperature: {temp_f:.1f}F / {temp_c:.1f}C"
+        return temp_c * 9 / 5 + 32
 
-    def read_ec(self) -> str:
+    def read_ec(self) -> float:
         result = self._client.read_holding_registers(
             address=0x15, count=1, device_id=1)
         if result.isError():
-            return "EC: error"
-        return f"EC: {result.registers[0]} uS/cm"
+            return 0
+        return result.registers[0]
 
-    def read_ph(self) -> str:
+    def read_ph(self) -> float:
         result = self._client.read_holding_registers(
             address=0x06, count=1, device_id=1)
         if result.isError():
-            return "pH: error"
-        return f"pH: {result.registers[0] * 0.01:.2f}"
+            return 0
+        return result.registers[0]
 
-    def read_npk(self) -> list[str]:
+    def read_npk(self) -> list[float]:
         result = self._client.read_holding_registers(
             address=0x1E, count=3, device_id=1)
         if result.isError():
-            return ["Nitrogen: error", "Phosphorus: error", "Potassium: error"]
-        n, p, k = result.registers
+            return [0, 0, 0]
         return [
-            f"Nitrogen:   {n} mg/kg",
-            f"Phosphorus: {p} mg/kg",
-            f"Potassium:  {k} mg/kg",
+            result.registers[0],
+            result.registers[1],
+            result.registers[2],
         ]
 
-    def read_all(self) -> list[str]:
+    def read_nitrogen(self) -> float:
+        result = self.client.read_holding_registers(
+            address=0x1E, count=1, device_id=1)
+        if result.isError():
+            return 0
+        return result.registers[0]
+
+
+    def read_all(self) -> list[float]:
         """Return a formatted list of all sensor readings."""
-        header = ["Soil Data", "-------------------------"]
-        readings = [
+        return [
             self.read_temperature(),
             self.read_moisture(),
             self.read_ec(),
             self.read_ph(),
             *self.read_npk(),
         ]
-        footer = ["-------------------------"]
-        return header + readings + footer
+
+
+    def read_nasa_data(self) -> list[float]:
+        """Return a list of data required by NASA."""
+        return [
+            self.read_nitrogen(),
+            self.read_pH(),
+            self.read_ec(),
+        ]
 
 
 # ==================================================
