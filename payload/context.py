@@ -161,9 +161,16 @@ class Context:
         self._drilling_thread = self._run_in_thread(self._drilling_sequence, "Drilling Thread")
 
     def _drilling_sequence(self):
-        for _i in range(DRILL_ATTEMPTS):
-            self.zombie.start_drilling()
-        self.zombie.start_soil_sensor()
+        sense_soil = False
+
+        while sense_soil:
+            for _i in range(DRILL_ATTEMPTS):
+                self.zombie.start_drilling()
+            self.zombie.start_soil_sensor()
+            if (self.zombie_data_packet.nitrogen > 1
+                or self.zombie_data_packet.electrical_conductivity > 1):
+                sense_soil = True
+
         self.zombie.stop_drilling()
 
     @property
