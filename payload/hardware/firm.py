@@ -3,12 +3,13 @@ This module contains the FIRM class, which is responsible for fetching data
 packets from FIRM.
 """
 
+import platform
 from typing import TYPE_CHECKING
 
 from firm_client import FIRMClient, FIRMDataPacket
 
 from payload.base_classes.base_firm import BaseFIRM
-from payload.constants import BAUD_RATE, PORT, SERIAL_TIMEOUT_SECONDS
+from payload.constants import BAUD_RATE, PORT_LINUX, PORT_WINDOWS, SERIAL_TIMEOUT_SECONDS
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -26,7 +27,10 @@ class FIRM(BaseFIRM):
         super().__init__()
         self.is_pretend = is_pretend
         self._log_file_path = log_file_path
-        self.firm_client = FIRMClient(PORT, BAUD_RATE, SERIAL_TIMEOUT_SECONDS)
+        if platform.system() == "Linux":
+            self.firm_client = FIRMClient(PORT_LINUX, BAUD_RATE, SERIAL_TIMEOUT_SECONDS)
+        else:
+            self.firm_client = FIRMClient(PORT_WINDOWS, BAUD_RATE, SERIAL_TIMEOUT_SECONDS)
 
     @property
     def is_running(self) -> bool:

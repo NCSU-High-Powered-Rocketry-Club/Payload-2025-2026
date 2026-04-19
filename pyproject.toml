@@ -6,6 +6,7 @@ readme = "README.md"
 
 dependencies = [
     "firm-client>=1.2.2",
+    "firm-client>=1.2.2",
     "msgspec>=0.20.0",
     "polars",
     "tzdata",
