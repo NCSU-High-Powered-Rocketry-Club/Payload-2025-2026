@@ -145,9 +145,9 @@ class FlightDisplay:
             if self._args.mode == "real":
                 self.sound_alarm_if_imu_is_having_issues()
                 # We will stop the display when the rocket takes off (performance reasons)
-                if self._context.state.name == "Launched":
-                    self._update_display(DisplayEndingType.TAKEOFF)
-                    break
+                #if self._context.state.name == "Launched":
+                #    self._update_display(DisplayEndingType.TAKEOFF)
+                #    break
 
             time.sleep(0.01)  # Don't hog the CPU
 
