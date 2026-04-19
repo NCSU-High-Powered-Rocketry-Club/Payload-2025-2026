@@ -17,35 +17,23 @@ class LoggerDataPacket(msgspec.Struct, array_like=True, kw_only=True):
     timestamp_epoch: str | None
     state_letter: str | None
 
-    # Estimated Data Packet Fields
-    est_position_z_meters: float | None = None
-    est_quaternion_w: float | None = None
-    est_quaternion_x: float | None = None
-    est_quaternion_y: float | None = None
-    est_quaternion_z: float | None = None
-    est_velocity_z_meters_per_s: float | None = None
-    magnetic_field_x_microteslas: float | None = None
-    magnetic_field_y_microteslas: float | None = None
-    magnetic_field_z_microteslas: float | None = None
-    pressure_pascals: float | None = None
-    raw_acceleration_x_gs: float | None = None
-    raw_acceleration_y_gs: float | None = None
-    raw_acceleration_z_gs: float | None = None
-    raw_angular_rate_x_deg_per_s: float | None = None
-    raw_angular_rate_y_deg_per_s: float | None = None
-    raw_angular_rate_z_deg_per_s: float | None = None
-    temperature_celsius: float | None = None
-    timestamp_seconds: float | None = None
-    est_mach_number: float | None = None
-    est_tilt_angle_degrees: float | None = None
+    # Zombie Packets
+    nitrogen: float | None = None
+    pH: float | None = None
+    electrical_conductivity: float | None = None
+
+    activating_legs: bool | None = None
+    checking_orientation: bool | None = None
 
     # Grave packets
     ejecting_zombie: bool | None = None
     latch: bool | None = None
 
-    # Zombie packets
-    activating_legs: bool | None = None
-    checking_orientation: bool | None = None
-    nitrogen: float | None = None
-    pH: float | None = None
-    electrical_conductivity: float | None = None
+    # Estimated Data Packet Fields
+    est_position_z_meters: float | None = None
+    est_velocity_z_meters_per_s: float | None = None
+    temperature_celsius: float | None = None
+    timestamp_seconds: float | None = None
+    raw_acceleration_x_gs: float | None = None
+    raw_acceleration_y_gs: float | None = None
+    raw_acceleration_z_gs: float | None = None
