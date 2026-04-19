@@ -6,12 +6,11 @@ import platform
 # Imports only if running on Raspberry Pi
 if platform.system() == 'Linux':
     # Servo Imports
-    from gpiozero import AngularServo, Device
-    from gpiozero.pins.pigpio import PiGPIOFactory
-    
     # Stepper Motor Imports
     import board  # type: ignore # Only imported when real hardware is used # noqa: PLC0415
     from digitalio import DigitalInOut, Direction  # type: ignore # noqa: PLC0415
+    from gpiozero import AngularServo, Device
+    from gpiozero.pins.pigpio import PiGPIOFactory
 
 from payload.base_classes.base_grave import BaseGrave
 from payload.data_handling.packets.grave_data_packet import GraveDataPacket
@@ -120,7 +119,6 @@ class Grave(BaseGrave):
     __slots__ = ("deployed", "ejecting_zombie", "latch_state", "lead_screw", "servo")
 
     def __init__(self):
-        self.servo = ServoDriver()
         self.lead_screw = LeadScrewDriver()
         self.deployed = False
         self.latch_state = False
@@ -139,6 +137,7 @@ class Grave(BaseGrave):
         pass
 
     def deploy_zombie(self):
+        self.servo = ServoDriver()
         self.servo.release_latch()
         self.latch_state = True
         time.sleep(2)
