@@ -97,7 +97,29 @@ class Zombie(BaseZombie):
     # Drilling
     # --------------------------------------------------
 
-    def start_drilling(self, step=2, delay=0.02) -> None:
+    def start_drilling(self, step=2, delay=0.02, sequence_num: int = 0) -> None:
+        """
+        Performs a single drill attempt: advances the auger and spins the
+        planetary motor simultaneously, monitoring current throughout.
+
+        On stall detection:
+            1. Both the auger and motor stop immediately.
+            2. The auger re-extends into the soil while the motor runs in
+               reverse (to help break the jam).
+            3. Once fully extended, the motor stops and the auger retracts
+               fully, leaving the system ready for the next attempt.
+
+        On clean completion:
+            The auger advances to full depth, then retracts normally with
+            the motor still running forward, then both stop.
+
+        Intended to be called in a loop from the test script:
+            for _ in range(DRILL_ATTEMPTS):
+                zombie.start_drilling()
+
+        :param step:  Pulse-width step size (us) for auger movement.
+        :param delay: Delay (seconds) between each auger step.
+        """
         auger = AugerServoDriver(pin=AUGER_SERVO_PIN)
         drill = PlanetaryDrillMotor(pwm_pin=DRILL_MOTOR_PWM_PIN)
         current_sensor = INA260CurrentSensor()
@@ -144,6 +166,7 @@ class Zombie(BaseZombie):
             drill.rotate(
                 duration=total_drill_duration,
                 stall_event=stall_event,
+                sequence_num=sequence_num
             )
             if stall_event.is_set():
                 # Motor is already stopped. Wait for the auger to retract
@@ -485,7 +508,10 @@ class PlanetaryDrillMotor:
             raise RuntimeError("Could not connect to pigpio daemon. Run: sudo pigpiod")
         self._pi.set_servo_pulsewidth(self._pin, self._STOP_PW)
 
-    def rotate(self, duration: float, stall_event: threading.Event = None) -> None:
+    def rotate(self,
+               duration: float,
+               stall_event: threading.Event = None,
+               sequence_num: int = 1) -> None:
         """
         Spin the drill motor for duration seconds with ramp up/down.
         Stops immediately if stall_event is set.
@@ -502,10 +528,12 @@ class PlanetaryDrillMotor:
                 time.sleep(0.05)
             ramp_time = abs(self._STOP_PW - self._UNJAM_PW) * 0.05
             run_time = duration - (ramp_time * 2)
-        else:
+        elif sequence_num == 0:
             for pw in range(self._STOP_PW, self._RUN_PW, -1):
                 self._pi.set_servo_pulsewidth(self._pin, pw)
                 time.sleep(0.02)
+            ramp_time = abs(self._STOP_PW - self._RUN_PW) * 0.02
+            run_time = duration - ramp_time
 
         ramp_time = abs(self._STOP_PW - self._RUN_PW) * 0.02
         run_time = max(duration - (ramp_time * 2), 0)
@@ -516,8 +544,6 @@ class PlanetaryDrillMotor:
             while (time.time() - start) < run_time:
                 time.sleep(0.05)
         else:
-            ramp_time = abs(self._STOP_PW - self._RUN_PW) * 0.02
-            run_time = duration - (ramp_time * 2)
             start = time.time()
             while (time.time() - start) < run_time:
                 if should_stop():
@@ -529,13 +555,12 @@ class PlanetaryDrillMotor:
             for pw in range(self._STOP_PW, self._UNJAM_PW):
                 self._pi.set_servo_pulsewidth(self._pin, pw)
                 time.sleep(0.05)
-        else:
+        elif sequence_num == 4:
             for pw in range(self._RUN_PW, self._STOP_PW):
                 self._pi.set_servo_pulsewidth(self._pin, pw)
                 time.sleep(0.02)
-
-        self._pi.set_servo_pulsewidth(self._pin, self._STOP_PW)
-        print("Planetary motor stopped")
+            self._pi.set_servo_pulsewidth(self._pin, self._STOP_PW)
+            print("Planetary motor stopped")
 
     def rotate_reverse(self, duration: float) -> None:
         """
@@ -653,14 +678,14 @@ class ModbusSoilSensor:
         if self._client.connected:
             self._client.close()
 
-    def read_moisture(self) -> str:
+    def read_moisture(self) -> float:
         result = self._client.read_holding_registers(
             address=0x12, count=1, device_id=1)
         if result.isError():
             return 0
         return result.registers[0]
 
-    def read_temperature(self) -> str:
+    def read_temperature(self) -> float:
         result = self._client.read_holding_registers(
             address=0x13, count=1, device_id=1)
         if result.isError():
@@ -668,21 +693,21 @@ class ModbusSoilSensor:
         temp_c = result.registers[0] * 0.1
         return temp_c * 9 / 5 + 32
 
-    def read_ec(self) -> str:
+    def read_ec(self) -> float:
         result = self._client.read_holding_registers(
             address=0x15, count=1, device_id=1)
         if result.isError():
             return 0
         return result.registers[0]
 
-    def read_ph(self) -> str:
+    def read_ph(self) -> float:
         result = self._client.read_holding_registers(
             address=0x06, count=1, device_id=1)
         if result.isError():
             return 0
         return result.registers[0]
 
-    def read_npk(self) -> list[str]:
+    def read_npk(self) -> list[float]:
         result = self._client.read_holding_registers(
             address=0x1E, count=3, device_id=1)
         if result.isError():
