@@ -96,7 +96,7 @@ class Zombie(BaseZombie):
     # Drilling
     # --------------------------------------------------
 
-    def start_drilling(self, step=2, delay=0.02) -> None:
+    def start_drilling(self, step=2, delay=0.02, sequence_num: int = 0) -> None:
         auger = AugerServoDriver(pin=AUGER_SERVO_PIN)
         drill = PlanetaryDrillMotor(pwm_pin=DRILL_MOTOR_PWM_PIN)
         current_sensor = INA260CurrentSensor()
@@ -134,6 +134,7 @@ class Zombie(BaseZombie):
             drill.rotate(
                 duration=total_drill_duration,
                 stall_event=stall_event,
+                sequence_num=sequence_num
             )
             if stall_event.is_set():
                 auger_thread.join()  # wait for auger to finish retracting
@@ -400,7 +401,10 @@ class PlanetaryDrillMotor:
                                "Run: sudo pigpiod")
         self._pi.set_servo_pulsewidth(self._pin, self._STOP_PW)
 
-    def rotate(self, duration: float, stall_event: threading.Event = None) -> None:
+    def rotate(self,
+               duration: float,
+               stall_event: threading.Event = None,
+               sequence_num: int = 1) -> None:
         """
         Spin the drill motor for duration seconds with ramp up/down.
         Stops immediately if stall_event is set.
@@ -417,10 +421,12 @@ class PlanetaryDrillMotor:
                 time.sleep(0.05)
             ramp_time = abs(self._STOP_PW - self._UNJAM_PW) * 0.05
             run_time = duration - (ramp_time * 2)
-        else:
+        elif sequence_num == 0:
             for pw in range(self._STOP_PW, self._RUN_PW, -1):
                 self._pi.set_servo_pulsewidth(self._pin, pw)
                 time.sleep(0.02)
+            ramp_time = abs(self._STOP_PW - self._RUN_PW) * 0.02
+            run_time = duration - ramp_time
 
         # Steady-state run
         if should_stop():
@@ -428,8 +434,6 @@ class PlanetaryDrillMotor:
             while (time.time() - start) < run_time:
                 time.sleep(0.05)
         else:
-            ramp_time = abs(self._STOP_PW - self._RUN_PW) * 0.02
-            run_time = duration - (ramp_time * 2)
             start = time.time()
             while (time.time() - start) < run_time:
                 if should_stop():
@@ -441,13 +445,12 @@ class PlanetaryDrillMotor:
             for pw in range(self._STOP_PW, self._UNJAM_PW):
                 self._pi.set_servo_pulsewidth(self._pin, pw)
                 time.sleep(0.05)
-        else:
+        elif sequence_num == 4:
             for pw in range(self._RUN_PW, self._STOP_PW):
                 self._pi.set_servo_pulsewidth(self._pin, pw)
                 time.sleep(0.02)
-
-        self._pi.set_servo_pulsewidth(self._pin, self._STOP_PW)
-        print("Planetary motor stopped")
+            self._pi.set_servo_pulsewidth(self._pin, self._STOP_PW)
+            print("Planetary motor stopped")
 
     def stop(self):
         """Return motor to neutral (stop) pulse width."""
