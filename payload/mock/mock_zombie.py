@@ -7,7 +7,7 @@ from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket
 class MockZombie(BaseZombie):
     """A mock implementation of the Zombie class for testing purposes."""
 
-    __slots__ = ("soil_data", "activating_legs", "checking_orientation")
+    __slots__ = ("activating_legs", "checking_orientation", "soil_data")
 
     def __init__(self):
         self.soil_data = 0

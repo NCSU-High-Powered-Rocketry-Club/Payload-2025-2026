@@ -32,6 +32,7 @@ class ServoDriver:
             max_angle=max_angle,
             min_pulse_width=min_pwm_signal,
             max_pulse_width=max_pwm_signal,
+            initial_angle = None,
         )
 
         self.start_angle = max_angle - 1
