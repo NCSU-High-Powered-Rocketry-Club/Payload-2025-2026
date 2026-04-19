@@ -39,7 +39,7 @@ DRILL_MOTOR_REVERSE_DC = 8.5
 STALL_CURRENT_THRESHOLD_A = 3.0   # amps — motor stops and auger retracts if exceeded
 
 # Modbus soil sensor
-MODBUS_PORT = "/dev/ttyUSB0"
+MODBUS_PORT = "/dev/ttyS0"
 MODBUS_BAUD = 9600
 
 # Leg servo (INJORA, gpiozero)
