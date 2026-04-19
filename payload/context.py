@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from zoneinfo import ZoneInfo
 
+from payload.constants import DRILL_ATTEMPTS
 from payload.data_handling.packets.context_data_packet import ContextDataPacket
 from payload.data_handling.packets.grave_data_packet import GraveDataPacket
 from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket
@@ -36,21 +37,24 @@ class Context:
     __slots__ = (
         "_deploy_thread",
         "_drilling_thread",
+        "_legs_retract_thread",
         "_legs_thread",
         "context_data_packet",
         "firm",
         "firm_data_packets",
         "grave",
         "grave_data_packet",
+        "landing_time_seconds",
         "launch_time_seconds",
         "logger",
         "max_acceleration",
         "most_recent_firm_data_packet",
+        "oriented",
         "state",
         "total_acceleration",
+        "xy_orientation",
         "zombie",
         "zombie_data_packet",
-        "landing_time_seconds"
     )
 
     def __init__(
@@ -75,8 +79,11 @@ class Context:
         self.max_acceleration: float = 0
         self._deploy_thread: threading.Thread | None = None
         self._legs_thread: threading.Thread | None = None
+        self._legs_retract_thread: threading.Thread | None = None,
         self._drilling_thread: threading.Thread | None = None
         self.landing_time_seconds: int = 0
+        self.xy_orientation: float = 0
+        self.oriented: bool = False
 
     def start(self):
         self.firm.start()
@@ -125,7 +132,7 @@ class Context:
         """
         Deploys Zombie out of the rocket. This method should only be called if code is Grave.
         """
-        self._deploy_thread = self._run_in_thread(self.grave.deploy_zombie(), "Deploy Zombie Thread")
+        self._deploy_thread = self._run_in_thread(self.grave.deploy_zombie, "Deploy Zombie Thread")
 
     @property
     def is_deploy_complete(self) -> bool:
@@ -141,7 +148,7 @@ class Context:
 
         if self.grave:
             self.grave_data_packet = self.grave.get_data_packet()
-            self.zombie_data_packet = ZombieDataPacket(0, 0, 0)
+            self.zombie_data_packet = ZombieDataPacket(0, 0, 0, 0, 0)
 
         if self.zombie:
             self.zombie_data_packet = self.zombie.get_data_packet()
@@ -155,13 +162,42 @@ class Context:
     def is_legs_deployed(self) -> bool:
         return self._legs_thread is not None and not self._legs_thread.is_alive()
 
+    def retract_zombie_legs(self) -> None:
+        """Something."""
+        self._legs_retract_thread = self._run_in_thread(self.zombie.retract_legs, "Retract Legs Thread")
+
+    @property
+    def is_legs_retracted(self) -> bool:
+        return self._legs_retract_thread is not None and not self._legs_retract_thread.is_alive()
+
+    @property
+    def is_oriented(self) -> bool:
+        self.xy_orientation = ((self.most_recent_firm_data_packet.raw_acceleration_x_gs ** 2) + (self.most_recent_firm_data_packet.raw_acceleration_y_gs ** 2)) ** 0.5
+        if ((self.xy_orientation > 0.9)
+        and (self.most_recent_firm_data_packet.raw_acceleration_x_gs > 0.4)
+        and (self.most_recent_firm_data_packet.raw_acceleration_y_gs > 0.4)
+        ):
+            self.oriented = True
+        else:
+            self.oriented = False
+
+        return self.oriented
+
     def start_zombie_drilling(self) -> None:
         """Starts the drilling mechanism. Only called if this is Zombie."""
         self._drilling_thread = self._run_in_thread(self._drilling_sequence, "Drilling Thread")
 
     def _drilling_sequence(self):
-        self.zombie.start_drilling()
-        self.zombie.start_soil_sensor()
+        sense_soil = False
+
+        while not sense_soil:
+            for _i in range(DRILL_ATTEMPTS):
+                self.zombie.start_drilling()
+            self.zombie.start_soil_sensor()
+            if (self.zombie_data_packet.nitrogen > 1
+                or self.zombie_data_packet.electrical_conductivity > 1):
+                sense_soil = True
+
         self.zombie.stop_drilling()
 
     @property

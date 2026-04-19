@@ -46,4 +46,6 @@ class LoggerDataPacket(msgspec.Struct, array_like=True, kw_only=True):
     # Zombie packets
     activating_legs: bool | None = None
     checking_orientation: bool | None = None
-    soil_info: None = None
+    nitrogen: float | None = None
+    pH: float | None = None
+    electrical_conductivity: float | None = None

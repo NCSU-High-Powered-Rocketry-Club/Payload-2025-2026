@@ -147,46 +147,22 @@ class Logger:
             # - isinstance is 45.2% faster than match statement
             # - hasattr is 20.57% faster than isinstance
             # - type() is 34.85% faster than hasattr
-            logger_packet.est_mach_number = firm_data_packet.est_mach_number
-            logger_packet.est_tilt_angle_degrees = firm_data_packet.est_tilt_angle_degrees
-            logger_packet.est_position_z_meters = firm_data_packet.est_position_z_meters
-            logger_packet.est_quaternion_w = firm_data_packet.est_quaternion_w
-            logger_packet.est_quaternion_x = firm_data_packet.est_quaternion_x
-            logger_packet.est_quaternion_y = firm_data_packet.est_quaternion_y
-            logger_packet.est_quaternion_z = firm_data_packet.est_quaternion_z
-            logger_packet.est_velocity_z_meters_per_s = firm_data_packet.est_velocity_z_meters_per_s
-            logger_packet.magnetic_field_x_microteslas = (
-                firm_data_packet.magnetic_field_x_microteslas
-            )
-            logger_packet.magnetic_field_y_microteslas = (
-                firm_data_packet.magnetic_field_y_microteslas
-            )
-            logger_packet.magnetic_field_z_microteslas = (
-                firm_data_packet.magnetic_field_z_microteslas
-            )
-            logger_packet.pressure_pascals = firm_data_packet.pressure_pascals
-            logger_packet.raw_acceleration_x_gs = firm_data_packet.raw_acceleration_x_gs
-            logger_packet.raw_acceleration_y_gs = firm_data_packet.raw_acceleration_y_gs
-            logger_packet.raw_acceleration_z_gs = firm_data_packet.raw_acceleration_z_gs
-            raw_rotated_acceleration_x_gs = firm_data_packet.raw_rotated_acceleration_x_gs
-            raw_rotated_acceleration_y_gs = firm_data_packet.raw_rotated_acceleration_y_gs
-            raw_rotated_acceleration_z_gs = firm_data_packet.raw_rotated_acceleration_z_gs
-            
-            logger_packet.raw_angular_rate_x_deg_per_s = (
-                firm_data_packet.raw_angular_rate_x_deg_per_s
-            )
-            logger_packet.raw_angular_rate_y_deg_per_s = (
-                firm_data_packet.raw_angular_rate_y_deg_per_s
-            )
-            logger_packet.raw_angular_rate_z_deg_per_s = (
-                firm_data_packet.raw_angular_rate_z_deg_per_s
-            )
-            logger_packet.temperature_celsius = firm_data_packet.temperature_celsius
+            logger_packet.nitrogen = zombie_data_packet.nitrogen
+            logger_packet.pH = zombie_data_packet.pH
+            logger_packet.electrical_conductivity = zombie_data_packet.electrical_conductivity
+
             logger_packet.ejecting_zombie = grave_data_packet.ejecting_zombie
             logger_packet.latch = grave_data_packet.latch
             logger_packet.activating_legs = zombie_data_packet.activating_legs
             logger_packet.checking_orientation = zombie_data_packet.checking_orientation
-            logger_packet.soil_info = zombie_data_packet.soil_info
+
+            logger_packet.est_position_z_meters = firm_data_packet.est_position_z_meters
+            logger_packet.est_velocity_z_meters_per_s = firm_data_packet.est_velocity_z_meters_per_s
+            logger_packet.temperature_celsius = firm_data_packet.temperature_celsius
+            logger_packet.raw_acceleration_x_gs = firm_data_packet.raw_acceleration_x_gs
+            logger_packet.raw_acceleration_y_gs = firm_data_packet.raw_acceleration_y_gs
+            logger_packet.raw_acceleration_z_gs = firm_data_packet.raw_acceleration_z_gs
+
             logger_data_packets.append(logger_packet)
 
         return logger_data_packets

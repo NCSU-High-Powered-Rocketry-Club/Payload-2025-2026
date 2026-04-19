@@ -145,9 +145,9 @@ class FlightDisplay:
             if self._args.mode == "real":
                 self.sound_alarm_if_imu_is_having_issues()
                 # We will stop the display when the rocket takes off (performance reasons)
-                if self._context.state.name == "Launched":
-                    self._update_display(DisplayEndingType.TAKEOFF)
-                    break
+                #if self._context.state.name == "Launched":
+                #    self._update_display(DisplayEndingType.TAKEOFF)
+                #    break
 
             time.sleep(0.01)  # Don't hog the CPU
 
@@ -182,7 +182,7 @@ class FlightDisplay:
             f"Time since replay start:      {C}{time.time() - self._start_time:<10.2f}{RESET} {R}s{RESET}",  # noqa: E501
             f"{Y}{'=' * 12} REAL TIME FLIGHT DATA {'=' * 12}{RESET}",
             # Format time as MM:SS:
-            f"Time (EST):                {G}{self._context.context_data_packet.epoch_time}{RESET}",
+            f"Time (CT):                {G}{self._context.context_data_packet.epoch_time}{RESET}",
             f"Launch time:               {G}T+{time.strftime('%M:%S', time.gmtime(time_since_launch))}{RESET}",  # noqa: E501
             f"State:                     {G}{self._context.state.name:<15}{RESET}", # noqa: E501
             f"Altitude:                  {G}{self._context.most_recent_firm_data_packet.est_position_z_meters:<10.3f}{RESET} {R}m{RESET}", # noqa: E501

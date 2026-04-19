@@ -136,7 +136,18 @@ class MockFIRM(BaseFIRM):
     def _scan_csv(self, *, start_index: int = 0, **kwargs) -> pl.LazyFrame:
         """Prepares the Polars LazyFrame with only the columns we need."""
         # 1. Get all headers present in the CSV
-        self._headers = pl.scan_csv(self._log_file_path).collect_schema().names()
+        excluded_columns = [
+            "est_tilt_angle_degrees",
+            "est_mach_number",
+            "raw_rotated_acceleration_x_gs",
+            "raw_rotated_acceleration_y_gs",
+            "raw_rotated_acceleration_z_gs",
+        ]
+        self._headers = [
+            h
+            for h in pl.scan_csv(self._log_file_path).collect_schema().names()
+            if h not in excluded_columns
+        ]
 
         # 2. Get all fields defined in the FIRMDataPacket struct
         packet_fields = list(FIRMDataPacket.__struct_fields__)
@@ -151,6 +162,7 @@ class MockFIRM(BaseFIRM):
             infer_schema_length=100,
             **kwargs,
         ).select(self._needed_fields)
+
 
     def _read_file(self, real_time_replay: bool, start_after_log_buffer: bool = False) -> None:
         """

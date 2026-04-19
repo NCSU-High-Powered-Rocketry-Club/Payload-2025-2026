@@ -8,6 +8,8 @@ class ZombieDataPacket(msgspec.Struct, tag=True, array_like=True):
 
     activating_legs: bool
     checking_orientation: bool
-    soil_info: int
+    nitrogen: float
+    pH: float
+    electrical_conductivity: float
 
     # add more as needed
