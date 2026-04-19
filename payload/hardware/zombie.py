@@ -44,7 +44,7 @@ MODBUS_BAUD = 9600
 
 # Leg servo (INJORA, gpiozero)
 LEG_SERVO_PIN = 13
-LEG_TIME = 5
+LEG_TIME = 60
 
 
 # ==================================================
