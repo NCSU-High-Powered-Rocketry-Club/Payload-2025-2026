@@ -25,19 +25,21 @@ class ServoDriver:
     ):
         Device.pin_factory = PiGPIOFactory()
 
+        self.start_angle = max_angle - 1
+        self.deploy_angle = max_angle - 40
+        self.max_angle = max_angle
+
         self.servo = AngularServo(
             pin,
             min_angle=min_angle,
             max_angle=max_angle,
             min_pulse_width=min_pwm_signal,
             max_pulse_width=max_pwm_signal,
-            initial_angle = None,
+            initial_angle = self.start_angle,
         )
 
-        self.start_angle = max_angle - 1
-        self.deploy_angle = max_angle - 40
-        self.max_angle = max_angle
-        self.servo.angle = self.start_angle
+
+
 
     def release_latch(self):
         try:
@@ -51,7 +53,7 @@ class ServoDriver:
             time.sleep(0.5)
 
         finally:
-            self.servo.angle = None  # Release torque
+            print("Released Latch")
 
     def set_deploy_angle(self, angle):
         if self.servo.min_angle <= angle <= self.servo.max_angle:
@@ -135,7 +137,7 @@ class Grave(BaseGrave):
         self.servo = ServoDriver()
         self.servo.release_latch()
         self.latch_state = True
-        time.sleep(2)
+        time.sleep(5)
         self.ejecting_zombie = True
         self.lead_screw.move(480, direction="extend")  # mm
         time.sleep(5)
