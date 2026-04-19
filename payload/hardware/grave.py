@@ -9,7 +9,7 @@ if platform.system() == 'Linux':
     # Stepper Motor Imports
     import board  # type: ignore # Only imported when real hardware is used # noqa: PLC0415
     from digitalio import DigitalInOut, Direction  # type: ignore # noqa: PLC0415
-    from gpiozero import AngularServo, Device
+    from gpiozero import AngularServo, Device, OutputDevice
     from gpiozero.pins.pigpio import PiGPIOFactory
 
 from payload.base_classes.base_grave import BaseGrave
@@ -65,41 +65,36 @@ class ServoDriver:
 class LeadScrewDriver:
     """Driver for the lead screw."""
 
-    def __init__(self, dir_pin=None, step_pin=None, slp_pin=None):
+    def __init__(self, dir_pin=27, step_pin=17, slp_pin=22):
 
-        dir_pin = dir_pin or board.D27
-        step_pin = step_pin or board.D17
-        slp_pin = slp_pin or board.D22
+        self.dir = OutputDevice(dir_pin)
 
-        self.dir = DigitalInOut(dir_pin)
-        self.dir.direction = Direction.OUTPUT
+        self.step = OutputDevice(step_pin)
 
-        self.step = DigitalInOut(step_pin)
-        self.step.direction = Direction.OUTPUT
-
-        self.slp = DigitalInOut(slp_pin)
-        self.slp.direction = Direction.OUTPUT
-        self.slp.value = False  # Start in sleep mode — LOW = sleeping on A4988 CHECK THIS WITH GRAVE
+        self.slp = OutputDevice(slp_pin, initial_value=False)  # Start in sleep mode — LOW = sleeping on A4988 CHECK THIS WITH GRAVE
 
     def wake(self):
-        self.slp.value = True
+        self.slp.on()
         time.sleep(0.001)  # A4988 needs ~1ms to wake before stepping
 
     def sleep(self):
-        self.slp.value = False
+        self.slp.off()
 
     def move(self, distance_mm, direction="extend"):
         STEPS = int(distance_mm / 0.01)
         microMode = 16
         steps = STEPS * microMode
-        self.dir.value = direction == "retract"
+        if direction == "retract":
+            self.dir.on()
+        else:
+            self.dir.off()
 
         self.wake()  # Wake before stepping
 
         for _ in range(steps):
-            self.step.value = True
+            self.step.on()
             time.sleep(0.00002)
-            self.step.value = False
+            self.step.off()
             time.sleep(0.00002)
 
         time.sleep(1)
