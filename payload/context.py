@@ -194,8 +194,9 @@ class Context:
             for _i in range(DRILL_ATTEMPTS):
                 self.zombie.start_drilling()
             self.zombie.start_soil_sensor()
-            if (self.zombie_data_packet.nitrogen > 1
-                or self.zombie_data_packet.electrical_conductivity > 1):
+            if (self.zombie_data_packet.pH != 7
+                or self.zombie_data_packet.electrical_conductivity > 0
+                or self.zombie_data_packet.nitrogen > 0):
                 sense_soil = True
 
         self.zombie.stop_drilling()
