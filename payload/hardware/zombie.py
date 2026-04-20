@@ -109,6 +109,7 @@ class Zombie(BaseZombie):
     # --------------------------------------------------
 
     def initialize_drill_motors(self) -> None:
+        self.pi = pigpio.pi()
         self.auger = AugerServoDriver(pin=AUGER_SERVO_PIN)
         self.drill = PlanetaryDrillMotor(pwm_pin=DRILL_MOTOR_PWM_PIN)
         self.current_sensor = INA260CurrentSensor()
@@ -555,7 +556,6 @@ class PlanetaryDrillMotor:
 
         self._pi.set_servo_pulsewidth(self._pin, self._RUN_PW)
 
-        run_time = 100
         # Steady-state run, will stop if jammed. If jammed, the auger will not check
         # for spikes while unjamming
         if should_stop():
