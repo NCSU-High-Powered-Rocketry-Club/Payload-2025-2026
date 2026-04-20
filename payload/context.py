@@ -195,10 +195,13 @@ class Context:
         while not sense_soil:
             print("Attempting drill")
             print(DRILL_ATTEMPTS)
+
             for _i in range(DRILL_ATTEMPTS):
                 print("Going at it again")
                 self.zombie.start_drilling(sequence_num=_i)
+
             self.zombie.start_soil_sensor()
+
             if (self.zombie_data_packet.pH != 7
                 or self.zombie_data_packet.electrical_conductivity > 0
                 or self.zombie_data_packet.nitrogen > 0):
