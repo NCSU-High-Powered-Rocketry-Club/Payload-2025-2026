@@ -110,8 +110,8 @@ class Zombie(BaseZombie):
 
     def initialize_drill_motors(self) -> None:
         self.pi = pigpio.pi()
-        self.auger = AugerServoDriver(pin=AUGER_SERVO_PIN)
-        self.drill = PlanetaryDrillMotor(pwm_pin=DRILL_MOTOR_PWM_PIN)
+        self.auger = AugerServoDriver(pi=self.pi, pin=AUGER_SERVO_PIN)
+        self.drill = PlanetaryDrillMotor(pi=self.pi, pwm_pin=DRILL_MOTOR_PWM_PIN)
         self.current_sensor = INA260CurrentSensor()
 
     def start_drilling(self, step=2, delay=0.02, sequence_num: int = 0) -> None:
