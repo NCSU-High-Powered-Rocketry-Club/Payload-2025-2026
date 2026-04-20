@@ -441,6 +441,11 @@ class AugerServoDriver:
         self._pi = pi
         if not self._pi.connected:
             raise RuntimeError("Could not connect to pigpio daemon. Run: sudo pigpiod")
+        
+    def _set_pw(self, pw):
+        print(f"[{time.time():.3f}] AUGER pin {self._pin} -> {pw}")
+        self._pi.set_servo_pulsewidth(self._pin, pw)
+
 
     def advance(self, step=2, delay=0.02,
                 stall_event: threading.Event | None = None) -> int:
@@ -460,7 +465,7 @@ class AugerServoDriver:
                 self.system_message = (f"Auger advance interrupted at {current_pw} us.")
                 return current_pw
             current_pw = min(current_pw + step, EXTENDED_PW)
-            self._pi.set_servo_pulsewidth(self._pin, current_pw)
+            self._set_pw(current_pw)
             time.sleep(delay)
         self.system_message = ("Auger fully extended")
         return EXTENDED_PW
@@ -479,7 +484,7 @@ class AugerServoDriver:
         current_pw = from_pw
         while current_pw > RETRACTED_PW:
             current_pw = max(current_pw - step, RETRACTED_PW)
-            self._pi.set_servo_pulsewidth(self._pin, current_pw)
+            self._set_pw(current_pw)
             time.sleep(delay)
         self.system_message = ("Auger fully retracted")
 
@@ -519,6 +524,11 @@ class PlanetaryDrillMotor:
         if not self._pi.connected:
             raise RuntimeError("Could not connect to pigpio daemon. Run: sudo pigpiod")
         self._pi.set_servo_pulsewidth(self._pin, self._STOP_PW)
+        
+    def _set_pw(self, pw):
+        print(f"[{time.time():.3f}] Drill pin {self._pin} -> {pw}")
+        self._pi.set_servo_pulsewidth(self._pin, pw)
+
 
     def rotate(self,
                duration: float,
@@ -549,12 +559,12 @@ class PlanetaryDrillMotor:
             print("Calling Ramp")
             self.system_message = str(sequence_num)
             for pw in range(self._STOP_PW, self._RUN_PW, -1):
-                self._pi.set_servo_pulsewidth(self._pin, pw)
+                self._set_pw(pw)
                 time.sleep(0.02)
             ramp_time = abs(self._STOP_PW - self._RUN_PW) * 0.02
             run_time = duration - ramp_time
 
-        self._pi.set_servo_pulsewidth(self._pin, self._RUN_PW)
+        self._set_pw(self._RUN_PW)
 
         # Steady-state run, will stop if jammed. If jammed, the auger will not check
         # for spikes while unjamming
