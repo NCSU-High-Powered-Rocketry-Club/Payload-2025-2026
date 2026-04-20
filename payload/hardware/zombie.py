@@ -55,7 +55,15 @@ LEG_TIME = 60
 class Zombie(BaseZombie):
     """A class representing a zombie payload."""
 
-    __slots__ = ("activating_legs", "checking_orientation", "nitrogen", "ph", "ec", "current_a")
+    __slots__ = (
+        "activating_legs",
+        "checking_orientation",
+        "current_a",
+        "ec",
+        "nitrogen",
+        "ph",
+        "system_message"
+        )
 
     def __init__(self):
         self.activating_legs = 0
@@ -64,6 +72,7 @@ class Zombie(BaseZombie):
         self.ph: float = 0
         self.ec: float = 0
         self.current_a: float = 0
+        self.system_message: str = None
 
     # --------------------------------------------------
     # Leg Deployment
@@ -139,7 +148,7 @@ class Zombie(BaseZombie):
                 #print(f"  Current: {current_ma:.1f} mA")
 
                 if self.current_a > STALL_CURRENT_THRESHOLD_A:
-                    print(
+                    self.system_message = (
                         f"  Stall detected! {self.current_a:.2f} A exceeds "
                         f"{STALL_CURRENT_THRESHOLD_A} A threshold."
                     )
@@ -156,7 +165,7 @@ class Zombie(BaseZombie):
             if stall_event.is_set():
                 # advance() already stopped — retract from the position it
                 # froze at, not from EXTENDED_PW
-                print("Auger stopped mid-advance due to stall.")
+                self.system_message = ("Auger stopped mid-advance due to stall.")
                 auger.retract(step=step, delay=delay, from_pw=stall_pw)
             else:
                 # Normal completion — retract from fully extended
@@ -192,9 +201,9 @@ class Zombie(BaseZombie):
             monitor_thread.join()
 
             if stall_event.is_set():
-                print("Drill attempt ended due to stall. Unjam complete.")
+                self.system_message = ("Drill attempt ended due to stall. Unjam complete.")
             else:
-                print("Drill attempt completed successfully.")
+                self.system_message = ("Drill attempt completed successfully.")
 
         finally:
             stop_monitor_event.set()
@@ -225,11 +234,11 @@ class Zombie(BaseZombie):
         sensor = ModbusSoilSensor(port=MODBUS_PORT, baud=MODBUS_BAUD)
 
         if not sensor.connect():
-            print("Failed to connect to soil sensor.")
+            self.system_message = ("Failed to connect to soil sensor.")
             return
 
         try:
-            print("Connected to Modbus RTU device.")
+            self.system_message = ("Connected to Modbus RTU device.")
             while True:
                 data = sensor.read_nasa_data()
                 self.nitrogen = data[0]
@@ -306,7 +315,7 @@ class Zombie(BaseZombie):
 # ==================================================
 
 
-def _unjam(auger: "AugerServoDriver", drill: "PlanetaryDrillMotor",
+def _unjam(self, auger: "AugerServoDriver", drill: "PlanetaryDrillMotor",
            step: int, delay: float) -> None:
     """
     Unjam sequence, called after a stall when both the auger and motor
@@ -327,7 +336,7 @@ def _unjam(auger: "AugerServoDriver", drill: "PlanetaryDrillMotor",
     :param step:   Pulse-width step size (us) for auger movement.
     :param delay:  Delay (seconds) between each auger step.
     """
-    print("--- Unjam sequence starting ---")
+    self.system_message = ("--- Unjam sequence starting ---")
 
     unjam_duration = ((EXTENDED_PW - RETRACTED_PW) / step) * delay
 
@@ -348,10 +357,10 @@ def _unjam(auger: "AugerServoDriver", drill: "PlanetaryDrillMotor",
     drill_thread.join()
 
     # Motor stops when rotate_reverse() returns. Now retract the auger.
-    print("Unjam extension complete. Retracting auger.")
+    self.system_message = ("Unjam extension complete. Retracting auger.")
     auger.retract(step=step, delay=delay)
 
-    print("--- Unjam sequence complete ---")
+    self.system_message = ("--- Unjam sequence complete ---")
 
 
 # ==================================================
@@ -443,16 +452,16 @@ class AugerServoDriver:
                  EXTENDED_PW on normal completion, or the mid-travel value
                  if interrupted by a stall.
         """
-        print("Auger extending")
+        self.system_message = ("Auger extending")
         current_pw = RETRACTED_PW
         while current_pw < EXTENDED_PW:
             if stall_event is not None and stall_event.is_set():
-                print(f"Auger advance interrupted at {current_pw} us.")
+                self.system_message = (f"Auger advance interrupted at {current_pw} us.")
                 return current_pw
             current_pw = min(current_pw + step, EXTENDED_PW)
             self._pi.set_servo_pulsewidth(self._pin, current_pw)
             time.sleep(delay)
-        print("Auger fully extended")
+        self.system_message = ("Auger fully extended")
         return EXTENDED_PW
 
     def retract(self, step=2, delay=0.02, from_pw: int = EXTENDED_PW) -> None:
@@ -465,13 +474,13 @@ class AugerServoDriver:
 
         :param from_pw: Pulse width (us) to start retracting from.
         """
-        print(f"Auger retracting from {from_pw} us")
+        self.system_message = (f"Auger retracting from {from_pw} us")
         current_pw = from_pw
         while current_pw > RETRACTED_PW:
             current_pw = max(current_pw - step, RETRACTED_PW)
             self._pi.set_servo_pulsewidth(self._pin, current_pw)
             time.sleep(delay)
-        print("Auger fully retracted")
+        self.system_message = ("Auger fully retracted")
 
     def stop(self):
         """Cut PWM signal to the auger servo and release pigpio resources."""
@@ -517,7 +526,7 @@ class PlanetaryDrillMotor:
         Spin the drill motor for duration seconds with ramp up/down.
         Stops immediately if stall_event is set.
         """
-        print("Planetary motor spinning")
+        self.system_message = ("Planetary motor spinning")
 
         def should_stop():
             return stall_event is not None and stall_event.is_set()
@@ -561,7 +570,7 @@ class PlanetaryDrillMotor:
                 self._pi.set_servo_pulsewidth(self._pin, pw)
                 time.sleep(0.02)
             self._pi.set_servo_pulsewidth(self._pin, self._STOP_PW)
-            print("Planetary motor stopped")
+            self.system_message = ("Planetary motor stopped")
 
     def rotate_reverse(self, duration: float) -> None:
         """
@@ -573,7 +582,7 @@ class PlanetaryDrillMotor:
 
         :param duration: Total run time in seconds (including ramps).
         """
-        print("Planetary motor spinning (reverse)")
+        self.system_message = ("Planetary motor spinning (reverse)")
 
         # Ramp up: STOP -> REVERSE (increasing pulse width)
         for pw in range(self._STOP_PW, self._REVERSE_PW):
@@ -593,7 +602,7 @@ class PlanetaryDrillMotor:
             time.sleep(0.02)
 
         self._pi.set_servo_pulsewidth(self._pin, self._STOP_PW)
-        print("Planetary motor stopped (reverse)")
+        self.system_message = ("Planetary motor stopped (reverse)")
 
     def stop(self):
         """Return motor to neutral (stop) pulse width."""
@@ -628,7 +637,7 @@ class INA260CurrentSensor:
             i2c = board.I2C()
             self._sensor = adafruit_ina260.INA260(i2c)
         except Exception as e:
-            print(f"INA260 init failed: {e}")
+            self.system_message = (f"INA260 init failed: {e}")
             self._sensor = None
 
     def read_current(self) -> float:

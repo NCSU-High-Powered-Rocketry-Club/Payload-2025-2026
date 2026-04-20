@@ -209,9 +209,14 @@ class FlightDisplay:
             if self._context.context_data_packet.state.__name__ == "ZombieDrillingState":
                 output.extend(
                     [
-                        f"Motor Current:             {G}{self._context.zombie.current_a:<10.3f}{RESET} {R}A{RESET}"
+                        f"Motor Current:             {G}{self._context.zombie.current_a:<10.3f}{RESET} {R}A{RESET}",
                     ]
                 )
+            output.extend(
+                [
+                    f"{R}{self._context.zombie.system_message}{RESET}",
+                ]
+            )
 
 
 
