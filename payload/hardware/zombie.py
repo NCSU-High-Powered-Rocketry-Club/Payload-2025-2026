@@ -533,6 +533,7 @@ class PlanetaryDrillMotor:
         def should_stop():
             return stall_event is not None and stall_event.is_set()
 
+        run_time = duration
         # Ramp up
         # If Jammed, the auger should ramp up to slower reverse speed
         if should_stop():
