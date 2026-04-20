@@ -346,7 +346,7 @@ def _unjam(self, auger: "AugerServoDriver", drill: "PlanetaryDrillMotor",
         kwargs={"step": step, "delay": delay},
     )
     drill_thread = threading.Thread(
-        target=drill.rotate_reverse,
+        target=drill.rotate,
         kwargs={"duration": unjam_duration},
     )
 
@@ -510,6 +510,7 @@ class PlanetaryDrillMotor:
     _STOP_PW    = int(DRILL_MOTOR_STOP_DC    / 100 * (1_000_000 / DRILL_MOTOR_FREQ))  # 1500 us
     _RUN_PW     = int(DRILL_MOTOR_RUN_DC     / 100 * (1_000_000 / DRILL_MOTOR_FREQ))  # 1300 us
     _REVERSE_PW = int(DRILL_MOTOR_REVERSE_DC / 100 * (1_000_000 / DRILL_MOTOR_FREQ))  # 1700 us
+    _UNJAM_PW   = int((_STOP_PW + _REVERSE_PW) / 2)                                   # 1600 us
 
     def __init__(self, pwm_pin=DRILL_MOTOR_PWM_PIN):
         self._pin = pwm_pin
@@ -532,12 +533,15 @@ class PlanetaryDrillMotor:
             return stall_event is not None and stall_event.is_set()
 
         # Ramp up
+        # If Jammed, the auger should ramp up to slower reverse speed
         if should_stop():
             for pw in range(self._STOP_PW, self._UNJAM_PW):
                 self._pi.set_servo_pulsewidth(self._pin, pw)
                 time.sleep(0.05)
             ramp_time = abs(self._STOP_PW - self._UNJAM_PW) * 0.05
             run_time = duration - (ramp_time * 2)
+
+        # Else check if its the first pass, if so ramp up to full speed
         elif sequence_num == 0:
             for pw in range(self._STOP_PW, self._RUN_PW, -1):
                 self._pi.set_servo_pulsewidth(self._pin, pw)
@@ -545,10 +549,9 @@ class PlanetaryDrillMotor:
             ramp_time = abs(self._STOP_PW - self._RUN_PW) * 0.02
             run_time = duration - ramp_time
 
-        ramp_time = abs(self._STOP_PW - self._RUN_PW) * 0.02
-        run_time = max(duration - (ramp_time * 2), 0)
 
-        # Steady-state run
+        # Steady-state run, will stop if jammed. If jammed, the auger will not check
+        # for spikes while unjamming
         if should_stop():
             start = time.time()
             while (time.time() - start) < run_time:
@@ -561,10 +564,13 @@ class PlanetaryDrillMotor:
                 time.sleep(0.02)
 
         # Ramp down
+        # If jammed the auger will slowly ramp down
         if should_stop():
             for pw in range(self._STOP_PW, self._UNJAM_PW):
                 self._pi.set_servo_pulsewidth(self._pin, pw)
                 time.sleep(0.05)
+
+        # If final pass, ramp down
         elif sequence_num == 4:
             for pw in range(self._RUN_PW, self._STOP_PW):
                 self._pi.set_servo_pulsewidth(self._pin, pw)
