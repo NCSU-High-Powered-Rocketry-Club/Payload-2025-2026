@@ -187,6 +187,7 @@ class Zombie(BaseZombie):
                 _unjam(self.auger, self.drill, step, delay)
 
         try:
+            print("In Try block in start drilling")
             monitor_thread = threading.Thread(
                 target=current_monitor_loop, daemon=True)
             auger_thread = threading.Thread(target=auger_sequence, daemon=True)
@@ -195,7 +196,7 @@ class Zombie(BaseZombie):
             monitor_thread.start()
             auger_thread.start()
             drill_thread.start()
-
+            print("joining stuff")
             auger_thread.join()
             drill_thread.join()
 
@@ -214,13 +215,13 @@ class Zombie(BaseZombie):
         """
         Emergency stop for both the auger and planetary motor.
         """
-        auger = AugerServoDriver(pin=AUGER_SERVO_PIN)
-        drill = PlanetaryDrillMotor(pwm_pin=DRILL_MOTOR_PWM_PIN)
+        self.auger = AugerServoDriver(pin=AUGER_SERVO_PIN)
+        self.drill = PlanetaryDrillMotor(pwm_pin=DRILL_MOTOR_PWM_PIN)
         try:
-            auger.stop()
-            drill.stop()
+            self.auger.stop()
+            self.drill.stop()
         finally:
-            drill.cleanup()
+            self.drill.cleanup()
 
     # --------------------------------------------------
     # Soil Sensor
@@ -555,16 +556,18 @@ class PlanetaryDrillMotor:
         # Steady-state run, will stop if jammed. If jammed, the auger will not check
         # for spikes while unjamming
         if should_stop():
+            print("trigger stop")
             start = time.time()
             while (time.time() - start) < run_time:
                 time.sleep(0.05)
         else:
+            print("check!")
             start = time.time()
             while (time.time() - start) < run_time:
                 if should_stop():
                     break
                 time.sleep(0.02)
-
+        print("Ramping down")
         # Ramp down
         # If jammed the auger will slowly ramp down
         if should_stop():
@@ -574,6 +577,7 @@ class PlanetaryDrillMotor:
 
         # If final pass, ramp down
         elif sequence_num == 4:
+            print("In final pass block")
             for pw in range(self._RUN_PW, self._STOP_PW):
                 self._pi.set_servo_pulsewidth(self._pin, pw)
                 time.sleep(0.02)

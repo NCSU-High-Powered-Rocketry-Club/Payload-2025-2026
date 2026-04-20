@@ -189,10 +189,14 @@ class Context:
 
     def _drilling_sequence(self):
         self.zombie.initialize_drill_motors()
+        print("Drills initialized")
         sense_soil = False
 
         while not sense_soil:
+            print("Attempting drill")
+            print(DRILL_ATTEMPTS)
             for _i in range(DRILL_ATTEMPTS):
+                print("Going at it again")
                 self.zombie.start_drilling(sequence_num=_i)
             self.zombie.start_soil_sensor()
             if (self.zombie_data_packet.pH != 7
