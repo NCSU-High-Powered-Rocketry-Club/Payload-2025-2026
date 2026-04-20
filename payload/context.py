@@ -185,7 +185,7 @@ class Context:
 
     def start_zombie_drilling(self) -> None:
         """Starts the drilling mechanism. Only called if this is Zombie."""
-        self._drilling_thread = self._run_in_thread(self._drilling_sequence, "Drilling Thread")
+        self._drilling_thread = self._run_in_thread(self.zombie.acitvate_drilling_cycle, "Drilling Thread")
 
     def _drilling_sequence(self):
         self.zombie.initialize_drill_motors()
