@@ -188,7 +188,8 @@ class Context:
         self._drilling_thread = self._run_in_thread(self._drilling_sequence, "Drilling Thread")
 
     def _drilling_sequence(self):
-        sense_soil = False
+        self.zombie.initialize_drill_motors()
+        self.sense_soil = False
 
         while not sense_soil:
             for _i in range(DRILL_ATTEMPTS):

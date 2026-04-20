@@ -108,6 +108,11 @@ class Zombie(BaseZombie):
     # Drilling
     # --------------------------------------------------
 
+    def initialize_drill_motors(self) -> None:
+        self.auger = AugerServoDriver(pin=AUGER_SERVO_PIN)
+        self.drill = PlanetaryDrillMotor(pwm_pin=DRILL_MOTOR_PWM_PIN)
+        self.current_sensor = INA260CurrentSensor()
+
     def start_drilling(self, step=2, delay=0.02, sequence_num: int = 0) -> None:
         """
         Performs a single drill attempt: advances the auger and spins the
@@ -131,10 +136,6 @@ class Zombie(BaseZombie):
         :param step:  Pulse-width step size (us) for auger movement.
         :param delay: Delay (seconds) between each auger step.
         """
-        auger = AugerServoDriver(pin=AUGER_SERVO_PIN)
-        drill = PlanetaryDrillMotor(pwm_pin=DRILL_MOTOR_PWM_PIN)
-        current_sensor = INA260CurrentSensor()
-
         phase_duration = ((EXTENDED_PW - RETRACTED_PW) / step) * delay
         total_drill_duration = phase_duration * 2
 
@@ -142,9 +143,9 @@ class Zombie(BaseZombie):
         stop_monitor_event = threading.Event()
 
         # --- Current monitor thread ---
-        def current_monitor_loop(self):
+        def current_monitor_loop():
             while not stop_monitor_event.is_set():
-                self.current_ma = current_sensor.read_current()
+                self.current_ma = self.current_sensor.read_current()
                 self.current_a = self.current_ma / 1000.0
                 #print(f"  Current: {current_ma:.1f} mA")
 
@@ -161,20 +162,20 @@ class Zombie(BaseZombie):
         # --- Auger thread: interrupts advance on stall, then retracts
         #     from wherever it stopped ---
         def auger_sequence():
-            stall_pw = auger.advance(step=step, delay=delay, stall_event=stall_event)
+            stall_pw = self.auger.advance(step=step, delay=delay, stall_event=stall_event)
 
             if stall_event.is_set():
                 # advance() already stopped — retract from the position it
                 # froze at, not from EXTENDED_PW
                 self.system_message = ("Auger stopped mid-advance due to stall.")
-                auger.retract(step=step, delay=delay, from_pw=stall_pw)
+                self.auger.retract(step=step, delay=delay, from_pw=stall_pw)
             else:
                 # Normal completion — retract from fully extended
-                auger.retract(step=step, delay=delay)
+                self.auger.retract(step=step, delay=delay)
 
         # --- Drill thread: stops on stall, waits for auger, then unjams ---
         def drill_sequence():
-            drill.rotate(
+            self.drill.rotate(
                 duration=total_drill_duration,
                 stall_event=stall_event,
                 sequence_num=sequence_num
@@ -183,7 +184,7 @@ class Zombie(BaseZombie):
                 # Motor is already stopped. Wait for the auger to retract
                 # fully before running the unjam sequence.
                 auger_thread.join()
-                _unjam(auger, drill, step, delay)
+                _unjam(self.auger, self.drill, step, delay)
 
         try:
             monitor_thread = threading.Thread(
