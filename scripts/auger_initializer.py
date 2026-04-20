@@ -2,7 +2,7 @@ import pigpio, time
 pi = pigpio.pi()
 pin = 23
 
-pi.set_servo_pulsewidth(pin,500)
+pi.set_servo_pulsewidth(pin,600)
 time.sleep(2)
 #print("Should have been still before this, moving now")
 #pi.set_servo_pulsewidth(pin,1600)

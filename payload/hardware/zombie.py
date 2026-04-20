@@ -37,7 +37,7 @@ DRILL_MOTOR_REVERSE_DC = 8.5  # % duty cycle — reverse rotation
 
 # Stall detection
 
-STALL_CURRENT_THRESHOLD_A = 1.5  # amps — triggers unjam sequence if exceeded
+STALL_CURRENT_THRESHOLD_A = 4  # amps — triggers unjam sequence if exceeded
 
 # Modbus soil sensor
 MODBUS_PORT = "/dev/ttyS0"
@@ -73,7 +73,7 @@ class Zombie(BaseZombie):
         self.ph: float = 0
         self.ec: float = 0
         self.current_a: float = 0
-        self.system_message: str = None
+        self.system_message: str = "System Message"
 
     # --------------------------------------------------
     # Leg Deployment
@@ -191,7 +191,7 @@ class Zombie(BaseZombie):
                 target=current_monitor_loop, daemon=True)
             auger_thread = threading.Thread(target=auger_sequence, daemon=True)
             drill_thread = threading.Thread(target=drill_sequence, daemon=True)
-
+            self.system_message = "Starting stuff"
             monitor_thread.start()
             auger_thread.start()
             drill_thread.start()
@@ -530,7 +530,8 @@ class PlanetaryDrillMotor:
 
         def should_stop():
             return stall_event is not None and stall_event.is_set()
-
+        print(sequence_num)
+        self.system_message = str(sequence_num)
         run_time = duration
         # Ramp up
         # If Jammed, the auger should ramp up to slower reverse speed
@@ -543,6 +544,7 @@ class PlanetaryDrillMotor:
 
         # Else check if its the first pass, if so ramp up to full speed
         elif sequence_num == 0:
+            self.system_message = str(sequence_num)
             for pw in range(self._STOP_PW, self._RUN_PW, -1):
                 self._pi.set_servo_pulsewidth(self._pin, pw)
                 time.sleep(0.02)
