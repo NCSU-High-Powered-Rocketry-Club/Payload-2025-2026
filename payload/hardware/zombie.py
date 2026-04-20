@@ -36,7 +36,7 @@ DRILL_MOTOR_RUN_DC = 6.5      # % duty cycle — forward rotation
 DRILL_MOTOR_REVERSE_DC = 8.5  # % duty cycle — reverse rotation
 
 # Stall detection
-STALL_CURRENT_THRESHOLD_A = 3.0  # amps — triggers unjam sequence if exceeded
+STALL_CURRENT_THRESHOLD_A = 4.0  # amps — triggers unjam sequence if exceeded
 
 # Modbus soil sensor
 MODBUS_PORT = "/dev/ttyS0"
@@ -55,7 +55,7 @@ LEG_TIME = 60
 class Zombie(BaseZombie):
     """A class representing a zombie payload."""
 
-    __slots__ = ("activating_legs", "checking_orientation", "soil_data")
+    __slots__ = ("activating_legs", "checking_orientation", "nitrogen", "ph", "ec", "current_a")
 
     def __init__(self):
         self.activating_legs = 0
@@ -63,6 +63,7 @@ class Zombie(BaseZombie):
         self.nitrogen: float = 0
         self.ph: float = 0
         self.ec: float = 0
+        self.current_a: float = 0
 
     # --------------------------------------------------
     # Leg Deployment
@@ -131,15 +132,15 @@ class Zombie(BaseZombie):
         stop_monitor_event = threading.Event()
 
         # --- Current monitor thread ---
-        def current_monitor_loop():
+        def current_monitor_loop(self):
             while not stop_monitor_event.is_set():
-                current_ma = current_sensor.read_current()
-                current_a = current_ma / 1000.0
-                print(f"  Current: {current_ma:.1f} mA")
+                self.current_ma = current_sensor.read_current()
+                self.current_a = self.current_ma / 1000.0
+                #print(f"  Current: {current_ma:.1f} mA")
 
-                if current_a > STALL_CURRENT_THRESHOLD_A:
+                if self.current_a > STALL_CURRENT_THRESHOLD_A:
                     print(
-                        f"  Stall detected! {current_a:.2f} A exceeds "
+                        f"  Stall detected! {self.current_a:.2f} A exceeds "
                         f"{STALL_CURRENT_THRESHOLD_A} A threshold."
                     )
                     stall_event.set()
