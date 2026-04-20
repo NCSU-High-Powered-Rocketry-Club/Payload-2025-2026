@@ -553,7 +553,9 @@ class PlanetaryDrillMotor:
             ramp_time = abs(self._STOP_PW - self._RUN_PW) * 0.02
             run_time = duration - ramp_time
 
+        self._pi.set_servo_pulsewidth(self._pin, self._RUN_PW)
 
+        run_time = 100
         # Steady-state run, will stop if jammed. If jammed, the auger will not check
         # for spikes while unjamming
         if should_stop():
