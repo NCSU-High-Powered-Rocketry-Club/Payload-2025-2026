@@ -208,9 +208,6 @@ class Zombie(BaseZombie):
 
         finally:
             stop_monitor_event.set()
-            auger.stop()
-            drill.stop()
-            drill.cleanup()
 
     def stop_drilling(self) -> None:
         """
@@ -523,7 +520,7 @@ class PlanetaryDrillMotor:
     def rotate(self,
                duration: float,
                stall_event: threading.Event = None,
-               sequence_num: int = 1) -> None:
+               sequence_num: int = 0) -> None:
         """
         Spin the drill motor for duration seconds with ramp up/down.
         Stops immediately if stall_event is set.
