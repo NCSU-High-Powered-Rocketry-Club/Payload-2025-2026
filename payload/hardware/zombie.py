@@ -435,9 +435,9 @@ class AugerServoDriver:
         EXTENDED_PW  = 1270 us — fully extended
     """
 
-    def __init__(self, pin=AUGER_SERVO_PIN):
+    def __init__(self, pi: pigpio.pi = None, pin=AUGER_SERVO_PIN):
         self._pin = pin
-        self._pi = pigpio.pi()
+        self._pi = pi
         if not self._pi.connected:
             raise RuntimeError("Could not connect to pigpio daemon. Run: sudo pigpiod")
 
@@ -512,9 +512,9 @@ class PlanetaryDrillMotor:
     _REVERSE_PW = int(DRILL_MOTOR_REVERSE_DC / 100 * (1_000_000 / DRILL_MOTOR_FREQ))  # 1700 us
     _UNJAM_PW   = int((_STOP_PW + _REVERSE_PW) / 2)                                   # 1600 us
 
-    def __init__(self, pwm_pin=DRILL_MOTOR_PWM_PIN):
+    def __init__(self, pi: pigpio.pi = None, pwm_pin=DRILL_MOTOR_PWM_PIN):
         self._pin = pwm_pin
-        self._pi = pigpio.pi()
+        self._pi = pi
         if not self._pi.connected:
             raise RuntimeError("Could not connect to pigpio daemon. Run: sudo pigpiod")
         self._pi.set_servo_pulsewidth(self._pin, self._STOP_PW)
