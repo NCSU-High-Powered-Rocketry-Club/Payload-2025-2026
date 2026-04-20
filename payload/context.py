@@ -189,7 +189,7 @@ class Context:
 
     def _drilling_sequence(self):
         self.zombie.initialize_drill_motors()
-        self.sense_soil = False
+        sense_soil = False
 
         while not sense_soil:
             for _i in range(DRILL_ATTEMPTS):
