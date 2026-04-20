@@ -545,6 +545,7 @@ class PlanetaryDrillMotor:
 
         # Else check if its the first pass, if so ramp up to full speed
         elif sequence_num == 0:
+            print("Calling Ramp")
             self.system_message = str(sequence_num)
             for pw in range(self._STOP_PW, self._RUN_PW, -1):
                 self._pi.set_servo_pulsewidth(self._pin, pw)
@@ -567,7 +568,7 @@ class PlanetaryDrillMotor:
                 if should_stop():
                     break
                 time.sleep(0.02)
-        print("Ramping down")
+
         # Ramp down
         # If jammed the auger will slowly ramp down
         if should_stop():
