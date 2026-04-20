@@ -36,7 +36,7 @@ DRILL_MOTOR_RUN_DC = 6.5      # % duty cycle — forward rotation
 DRILL_MOTOR_REVERSE_DC = 8.5  # % duty cycle — reverse rotation
 
 # Stall detection
-STALL_CURRENT_THRESHOLD_A = 3.0  # amps — triggers unjam sequence if exceeded
+STALL_CURRENT_THRESHOLD_A = 1.5  # amps — triggers unjam sequence if exceeded
 
 # Modbus soil sensor
 MODBUS_PORT = "/dev/ttyS0"
