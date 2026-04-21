@@ -187,28 +187,6 @@ class Context:
         """Starts the drilling mechanism. Only called if this is Zombie."""
         self._drilling_thread = self._run_in_thread(self.zombie.start_drilling, "Drilling Thread")
 
-    def _drilling_sequence(self):
-        self.zombie.initialize_drill_motors()
-        print("Drills initialized")
-        sense_soil = False
-
-        while not sense_soil:
-            print("Attempting drill")
-            print(DRILL_ATTEMPTS)
-
-            for _i in range(DRILL_ATTEMPTS):
-                print("Going at it again")
-                self.zombie.start_drilling(sequence_num=_i)
-
-            self.zombie.start_soil_sensor()
-
-            if (self.zombie_data_packet.pH != 7
-                or self.zombie_data_packet.electrical_conductivity > 0
-                or self.zombie_data_packet.nitrogen > 0):
-                sense_soil = True
-
-        self.zombie.stop_drilling()
-
     @property
     def is_drilling_complete(self) -> bool:
         return self._drilling_thread is not None and not self._drilling_thread.is_alive()
