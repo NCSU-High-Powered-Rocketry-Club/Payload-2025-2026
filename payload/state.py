@@ -177,7 +177,7 @@ class LandedState(State):
         if self.context.grave:
             self.context.state = DeployZombieState(self.context)
         elif self.context.zombie:
-            self.context.state = ZombieDrillingState(self.context)
+            self.context.state = ZombieDeployedState(self.context)
 
 
 class DeployZombieState(State):
