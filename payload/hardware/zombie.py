@@ -75,7 +75,6 @@ class Zombie(BaseZombie):
         self.ec: float = 0
         self.current_a: float = 0
         self.system_message: str = "System Message"
-        self.has_drilled = False
 
     # --------------------------------------------------
     # Leg Deployment
@@ -147,6 +146,7 @@ class Zombie(BaseZombie):
 
         try:
             self.soil_sensor = threading.Thread(target=self.start_soil_sensor, daemon=True)
+            self.soil_sensor.start()
             self.system_message = "Entering Try Statement"
             monitor_thread = threading.Thread(
                 target=self.current_monitor_loop, daemon=True)
@@ -167,8 +167,6 @@ class Zombie(BaseZombie):
         finally:
             self.stop_monitor_event.set()
 
-        self.has_drilled = True
-        return self.has_drilled
 
     def current_monitor_loop(self):
             while not self.stop_monitor_event.is_set():
