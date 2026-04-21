@@ -469,8 +469,8 @@ class AugerServoDriver:
             raise RuntimeError("Could not connect to pigpio daemon. Run: sudo pigpiod")
 
     def advance(self,
-                step=2,
-                delay=0.04,
+                step=4,
+                delay=0.1,
                 stall_event: threading.Event | None = None,
                 from_pw: int = RETRACTED_PW) -> int:
         """
@@ -496,7 +496,7 @@ class AugerServoDriver:
         self.system_message = ("Auger fully extended")
         return EXTENDED_PW
 
-    def retract(self, step=2, delay=0.04, stall_event: threading.Event() | None = None, from_pw: int = EXTENDED_PW, ) -> None:
+    def retract(self, step=4, delay=0.1, stall_event: threading.Event() | None = None, from_pw: int = EXTENDED_PW, ) -> None:
         """
         Step from *from_pw* back to fully retracted position.
 
