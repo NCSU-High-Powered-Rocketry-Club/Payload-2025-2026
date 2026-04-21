@@ -141,14 +141,17 @@ class Zombie(BaseZombie):
         """
         self.soil_collected = False
         self.initialize_drill_motors()
+        self.system_message = "Motors Initialized"
         self.stall_event = threading.Event()
         self.stop_monitor_event = threading.Event()
 
         try:
             self.soil_sensor = threading.Thread(target=self.start_soil_sensor, daemon=True)
+            self.system_message = "Entering Try Statement"
             monitor_thread = threading.Thread(
                 target=self.current_monitor_loop, daemon=True)
             monitor_thread.start()
+            self.system_message = "Created current sensor thread"
             while not self.soil_collected:
                 self.auger_sequence()
 
@@ -196,21 +199,19 @@ class Zombie(BaseZombie):
 
     def auger_sequence(self):
             self.soil_collected = False
-
+            self.system_message = "Entered Auger sequence"
             while not self.soil_collected:
                 self.drill.ramp(self.stall_event, "up")
 
                 for _i in range(DRILL_ATTEMPTS):
-                    self.stall_pw = self.auger.advance(step=self.step,
-                                                delay=self.delay,
-                                                stall_event=self.stall_event)
+                    self.stall_pw = self.auger.advance(stall_event=self.stall_event)
                     if self.stall_event.is_set():
                         # advance() already stopped — retract from the position it
                         # froze at, not from EXTENDED_PW
                         self.system_message = ("Auger stopped mid-advance due to stall.")
                         return
                     # Normal completion — retract from fully extended
-                    self.stall_pw = self.auger.retract(step=self.step, delay=self.delay)
+                    self.stall_pw = self.auger.retract(stall_event=self.stall_event)
 
                 self.drill.ramp(self.stall_event, "down")
 
@@ -264,7 +265,9 @@ class Zombie(BaseZombie):
         try:
             self.system_message = ("Connected to Modbus RTU device.")
             while True:
+                self.system_message = "Trying Modbus Stuff"
                 data = sensor.read_nasa_data()
+                self.system_message = "Got data"
                 self.nitrogen = data[0]
                 self.ph = data[1]
                 self.ec = data[2]
@@ -493,7 +496,7 @@ class AugerServoDriver:
         self.system_message = ("Auger fully extended")
         return EXTENDED_PW
 
-    def retract(self, step=2, delay=0.02, from_pw: int = EXTENDED_PW, ) -> None:
+    def retract(self, step=2, delay=0.02, stall_event: threading.Event() | None = None, from_pw: int = EXTENDED_PW, ) -> None:
         """
         Step from *from_pw* back to fully retracted position.
 
@@ -853,7 +856,7 @@ class ModbusSoilSensor:
         """Return a list of data required by NASA."""
         return [
             self.read_nitrogen(),
-            self.read_pH(),
+            self.read_ph(),
             self.read_ec(),
         ]
 
