@@ -117,7 +117,7 @@ class Zombie(BaseZombie):
         self.current_sensor = INA260CurrentSensor()
         self.start_soil_sensor()
 
-    def acitvate_drilling_cycle(self, step=2, delay=0.02) -> None:
+    def start_drilling(self, step=2, delay=0.02) -> None:
         """
         Performs a single drill attempt: advances the auger and spins the
         planetary motor simultaneously, monitoring current throughout.
@@ -645,7 +645,7 @@ class PlanetaryDrillMotor:
                         return
                     self._pi.set_servo_pulsewidth(self._pin, pw)
                     time.sleep(0.01)
-                    
+
     def ramp_unjam(self,
             stall_event: threading.Event | None = None,
             dir: str | None = None) -> None:
@@ -831,7 +831,7 @@ class ModbusSoilSensor:
         ]
 
     def read_nitrogen(self) -> float:
-        result = self.client.read_holding_registers(
+        result = self._client.read_holding_registers(
             address=0x1E, count=1, device_id=1)
         if result.isError():
             return 0
