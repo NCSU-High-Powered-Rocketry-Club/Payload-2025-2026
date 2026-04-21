@@ -115,7 +115,6 @@ class Zombie(BaseZombie):
         self.auger = AugerServoDriver(pi=self.pi, pin=AUGER_SERVO_PIN)
         self.drill = PlanetaryDrillMotor(pi=self.pi, pwm_pin=DRILL_MOTOR_PWM_PIN)
         self.current_sensor = INA260CurrentSensor()
-        self.start_soil_sensor()
 
     def start_drilling(self, step=2, delay=0.02) -> None:
         """
@@ -142,27 +141,28 @@ class Zombie(BaseZombie):
         """
         self.soil_collected = False
         self.initialize_drill_motors()
-        stall_event = threading.Event()
-        stop_monitor_event = threading.Event()
+        self.stall_event = threading.Event()
+        self.stop_monitor_event = threading.Event()
 
         try:
+            self.soil_sensor = threading.Thread(target=self.start_soil_sensor, daemon=True)
             monitor_thread = threading.Thread(
                 target=self.current_monitor_loop, daemon=True)
             monitor_thread.start()
             while not self.soil_collected:
                 self.auger_sequence()
 
-                if stall_event.is_set():
+                if self.stall_event.is_set():
                     self.system_message = ("Drill attempt ended due to stall. Unjam sequence activating.")
                     self.unjam()
                 else:
                     self.system_message = ("Drill attempt completed successfully.")
 
-            stop_monitor_event.set()
+            self.stop_monitor_event.set()
             monitor_thread.join()
 
         finally:
-            stop_monitor_event.set()
+            self.stop_monitor_event.set()
 
         return self.has_drilled
 
