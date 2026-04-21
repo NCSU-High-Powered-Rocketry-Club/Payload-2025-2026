@@ -17,9 +17,8 @@ if platform.system() == "Linux":
     import pigpio
 
 from payload.base_classes.base_zombie import BaseZombie
-from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket
-
 from payload.constants import DRILL_ATTEMPTS
+from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket
 
 # ==================================================
 # ------------------- CONSTANTS --------------------
@@ -47,7 +46,7 @@ MODBUS_BAUD = 9600
 
 # Leg servo (INJORA, gpiozero)
 LEG_SERVO_PIN = 13
-LEG_TIME = 60
+LEG_TIME = 62
 
 
 # ==================================================
@@ -190,7 +189,6 @@ class Zombie(BaseZombie):
             self.system_message = "Entered Auger sequence"
             while not self.soil_collected:
                 self.drill.ramp(self.stall_event, "up")
-                
 
                 for _i in range(DRILL_ATTEMPTS):
                     time.sleep(10)
@@ -206,9 +204,10 @@ class Zombie(BaseZombie):
 
                 self.drill.ramp(self.stall_event, "down")
 
-                if (self.zombie_data_packet.pH != 7
-                or self.zombie_data_packet.electrical_conductivity > 0
-                or self.zombie_data_packet.nitrogen > 0):
+                data_packet = self.get_data_packet()
+                if (data_packet.pH != 7
+                        or data_packet.electrical_conductivity > 0
+                        or data_packet.nitrogen > 0):
                     self.soil_collected = True
 
     def unjam(self):
