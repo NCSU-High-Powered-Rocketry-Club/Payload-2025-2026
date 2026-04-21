@@ -38,7 +38,7 @@ DRILL_MOTOR_REVERSE_DC = 8.5  # % duty cycle — reverse rotation
 
 # Stall detection
 
-STALL_CURRENT_THRESHOLD_A = 4  # amps — triggers unjam sequence if exceeded
+STALL_CURRENT_THRESHOLD_A = 5  # amps — triggers unjam sequence if exceeded
 
 # Modbus soil sensor
 MODBUS_PORT = "/dev/ttyS0"
@@ -191,14 +191,14 @@ class Zombie(BaseZombie):
                 self.drill.ramp(self.stall_event, "up")
 
                 for _i in range(DRILL_ATTEMPTS):
-                    time.sleep(10)
+                    time.sleep(1)
                     self.stall_pw = self.auger.advance(stall_event=self.stall_event)
                     if self.stall_event.is_set():
                         # advance() already stopped — retract from the position it
                         # froze at, not from EXTENDED_PW
                         self.system_message = ("Auger stopped mid-advance due to stall.")
                         return
-                    time.sleep(10)
+                    time.sleep(1)
                     # Normal completion — retract from fully extended
                     self.stall_pw = self.auger.retract(stall_event=self.stall_event)
 
@@ -226,8 +226,6 @@ class Zombie(BaseZombie):
         """
         Emergency stop for both the auger and planetary motor.
         """
-        self.auger = AugerServoDriver(pin=AUGER_SERVO_PIN)
-        self.drill = PlanetaryDrillMotor(pwm_pin=DRILL_MOTOR_PWM_PIN)
         try:
             self.auger.stop()
             self.drill.stop()
@@ -403,7 +401,7 @@ class AugerServoDriver:
 
     def advance(self,
                 step=5,
-                delay=0.05,
+                delay=0.03,
                 stall_event: threading.Event | None = None,
                 from_pw: int = RETRACTED_PW) -> int:
         """
@@ -429,7 +427,7 @@ class AugerServoDriver:
         self.system_message = ("Auger fully extended")
         return EXTENDED_PW
 
-    def retract(self, step=5, delay=0.05, stall_event: threading.Event() | None = None, from_pw: int = EXTENDED_PW, ) -> None:
+    def retract(self, step=5, delay=0.03, stall_event: threading.Event() | None = None, from_pw: int = EXTENDED_PW, ) -> None:
         """
         Step from *from_pw* back to fully retracted position.
 
@@ -506,14 +504,14 @@ class PlanetaryDrillMotor:
                         self._pi_set_servo_pulsewidth(self._pin, self._STOP_PW)
                         return
                     self._pi.set_servo_pulsewidth(self._pin, pw)
-                    time.sleep(0.04)
+                    time.sleep(0.02)
             case "down":
                 for pw in range(self._RUN_PW, self._STOP_PW):
                     if stall_event.is_set():
                         self._pi_set_servo_pulsewidth(self._pin, self._STOP_PW)
                         return
                     self._pi.set_servo_pulsewidth(self._pin, pw)
-                    time.sleep(0.04)
+                    time.sleep(0.02)
 
     def ramp_unjam(self,
             stall_event: threading.Event | None = None,
