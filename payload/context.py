@@ -6,7 +6,6 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from zoneinfo import ZoneInfo
 
-from payload.constants import DRILL_ATTEMPTS
 from payload.data_handling.packets.context_data_packet import ContextDataPacket
 from payload.data_handling.packets.grave_data_packet import GraveDataPacket
 from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket
