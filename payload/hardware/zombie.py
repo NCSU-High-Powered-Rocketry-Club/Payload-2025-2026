@@ -470,7 +470,7 @@ class AugerServoDriver:
 
     def advance(self,
                 step=2,
-                delay=0.02,
+                delay=0.04,
                 stall_event: threading.Event | None = None,
                 from_pw: int = RETRACTED_PW) -> int:
         """
@@ -496,7 +496,7 @@ class AugerServoDriver:
         self.system_message = ("Auger fully extended")
         return EXTENDED_PW
 
-    def retract(self, step=2, delay=0.02, stall_event: threading.Event() | None = None, from_pw: int = EXTENDED_PW, ) -> None:
+    def retract(self, step=2, delay=0.04, stall_event: threading.Event() | None = None, from_pw: int = EXTENDED_PW, ) -> None:
         """
         Step from *from_pw* back to fully retracted position.
 
@@ -507,6 +507,7 @@ class AugerServoDriver:
         :param from_pw: Pulse width (us) to start retracting from.
         """
         self.system_message = (f"Auger retracting from {from_pw} us")
+        self.stall_event = stall_event
         current_pw = from_pw
         while current_pw > RETRACTED_PW:
             if self.stall_event is not None and self.stall_event.is_set():
@@ -640,14 +641,14 @@ class PlanetaryDrillMotor:
                         self._pi_set_servo_pulsewidth(self._pin, self._STOP_PW)
                         return
                     self._pi.set_servo_pulsewidth(self._pin, pw)
-                    time.sleep(0.01)
+                    time.sleep(0.04)
             case "down":
                 for pw in range(self._RUN_PW, self._STOP_PW):
                     if stall_event.is_set():
                         self._pi_set_servo_pulsewidth(self._pin, self._STOP_PW)
                         return
                     self._pi.set_servo_pulsewidth(self._pin, pw)
-                    time.sleep(0.01)
+                    time.sleep(0.04)
 
     def ramp_unjam(self,
             stall_event: threading.Event | None = None,
@@ -668,14 +669,14 @@ class PlanetaryDrillMotor:
                         self._pi_set_servo_pulsewidth(self._pin, self._STOP_PW)
                         return
                     self._pi.set_servo_pulsewidth(self._pin, pw)
-                    time.sleep(0.01)
+                    time.sleep(0.04)
             case "down":
                 for pw in range(self._UNJAM_PW, self._STOP_PW, -1):
                     if stall_event.is_set():
                         self._pi_set_servo_pulsewidth(self._pin, self._STOP_PW)
                         return
                     self._pi.set_servo_pulsewidth(self._pin, pw)
-                    time.sleep(0.01)
+                    time.sleep(0.04)
 
     def rotate_reverse(self, duration: float) -> None:
         """
