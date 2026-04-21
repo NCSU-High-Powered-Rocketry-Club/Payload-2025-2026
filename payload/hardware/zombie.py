@@ -202,14 +202,17 @@ class Zombie(BaseZombie):
             self.system_message = "Entered Auger sequence"
             while not self.soil_collected:
                 self.drill.ramp(self.stall_event, "up")
+                
 
                 for _i in range(DRILL_ATTEMPTS):
+                    time.sleep(10)
                     self.stall_pw = self.auger.advance(stall_event=self.stall_event)
                     if self.stall_event.is_set():
                         # advance() already stopped — retract from the position it
                         # froze at, not from EXTENDED_PW
                         self.system_message = ("Auger stopped mid-advance due to stall.")
                         return
+                    time.sleep(10)
                     # Normal completion — retract from fully extended
                     self.stall_pw = self.auger.retract(stall_event=self.stall_event)
 
@@ -224,13 +227,13 @@ class Zombie(BaseZombie):
         self.stall_event.clear()
         match self.auger.stall_condition:
             case "Advance":
-                self.drill.ramp_unjam(dir="Up")
+                self.drill.ramp_unjam(dir="Up", stall_event=self.stall_event)
                 self.auger.retract(from_pw=self.stall_pw)
-                self.drill.ramp_unjam(dir="Down")
+                self.drill.ramp_unjam(dir="Down", stall_event=self.stall_event)
             case "Retract":
-                self.drill.ramp_unjam(dir="up")
+                self.drill.ramp_unjam(dir="up", stall_event=self.stall_event)
                 self.auger.advance(from_pw=self.stall_pw)
-                self.drill.ramp_unjam(dir="down")
+                self.drill.ramp_unjam(dir="down", stall_event = self.stall_event)
 
 
 
@@ -469,8 +472,8 @@ class AugerServoDriver:
             raise RuntimeError("Could not connect to pigpio daemon. Run: sudo pigpiod")
 
     def advance(self,
-                step=4,
-                delay=0.1,
+                step=5,
+                delay=0.05,
                 stall_event: threading.Event | None = None,
                 from_pw: int = RETRACTED_PW) -> int:
         """
@@ -496,7 +499,7 @@ class AugerServoDriver:
         self.system_message = ("Auger fully extended")
         return EXTENDED_PW
 
-    def retract(self, step=4, delay=0.1, stall_event: threading.Event() | None = None, from_pw: int = EXTENDED_PW, ) -> None:
+    def retract(self, step=5, delay=0.05, stall_event: threading.Event() | None = None, from_pw: int = EXTENDED_PW, ) -> None:
         """
         Step from *from_pw* back to fully retracted position.
 
