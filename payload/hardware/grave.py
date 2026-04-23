@@ -139,7 +139,7 @@ class Grave(BaseGrave):
         self.latch_state = True
         time.sleep(5)
         self.ejecting_zombie = True
-        self.lead_screw.move(480, direction="extend")  # mm
+        self.lead_screw.move(465, direction="deploy")  # mm
         time.sleep(5)
         self.lead_screw.move(120, direction="retract")  # mm
 
