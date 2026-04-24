@@ -389,7 +389,7 @@ class AugerServoDriver:
     PWM pins. It uses DMA to achieve ~1 us timing accuracy.
 
     Pulse widths map to position across 1800 degrees of travel:
-        RETRACTED_PW = 500 us  — fully retracted
+        RETRACTED_PW = 600 us  — fully retracted
         EXTENDED_PW  = 1270 us — fully extended
     """
 
