@@ -6,12 +6,11 @@ import platform
 # Imports only if running on Raspberry Pi
 if platform.system() == 'Linux':
     # Servo Imports
-    from gpiozero import AngularServo, Device
-    from gpiozero.pins.pigpio import PiGPIOFactory
-    
     # Stepper Motor Imports
     import board  # type: ignore # Only imported when real hardware is used # noqa: PLC0415
     from digitalio import DigitalInOut, Direction  # type: ignore # noqa: PLC0415
+    from gpiozero import AngularServo, Device, OutputDevice
+    from gpiozero.pins.pigpio import PiGPIOFactory
 
 from payload.base_classes.base_grave import BaseGrave
 from payload.data_handling.packets.grave_data_packet import GraveDataPacket
@@ -26,19 +25,21 @@ class ServoDriver:
     ):
         Device.pin_factory = PiGPIOFactory()
 
+        self.start_angle = max_angle - 1
+        self.deploy_angle = max_angle - 40
+        self.max_angle = max_angle
+
         self.servo = AngularServo(
             pin,
             min_angle=min_angle,
             max_angle=max_angle,
             min_pulse_width=min_pwm_signal,
             max_pulse_width=max_pwm_signal,
-            initial_angle = None,
+            initial_angle = self.start_angle,
         )
 
-        self.start_angle = max_angle - 1
-        self.deploy_angle = max_angle - 40
-        self.max_angle = max_angle
-        self.servo.angle = self.start_angle
+
+
 
     def release_latch(self):
         try:
@@ -52,7 +53,7 @@ class ServoDriver:
             time.sleep(0.5)
 
         finally:
-            self.servo.angle = None  # Release torque
+            print("Released Latch")
 
     def set_deploy_angle(self, angle):
         if self.servo.min_angle <= angle <= self.servo.max_angle:
@@ -66,41 +67,36 @@ class ServoDriver:
 class LeadScrewDriver:
     """Driver for the lead screw."""
 
-    def __init__(self, dir_pin=None, step_pin=None, slp_pin=None):
+    def __init__(self, dir_pin=27, step_pin=17, slp_pin=22):
 
-        dir_pin = dir_pin or board.D27
-        step_pin = step_pin or board.D17
-        slp_pin = slp_pin or board.D22
+        self.dir = OutputDevice(dir_pin)
 
-        self.dir = DigitalInOut(dir_pin)
-        self.dir.direction = Direction.OUTPUT
+        self.step = OutputDevice(step_pin)
 
-        self.step = DigitalInOut(step_pin)
-        self.step.direction = Direction.OUTPUT
-
-        self.slp = DigitalInOut(slp_pin)
-        self.slp.direction = Direction.OUTPUT
-        self.slp.value = False  # Start in sleep mode — LOW = sleeping on A4988 CHECK THIS WITH GRAVE
+        self.slp = OutputDevice(slp_pin, initial_value=False)  # Start in sleep mode — LOW = sleeping on A4988 CHECK THIS WITH GRAVE
 
     def wake(self):
-        self.slp.value = True
+        self.slp.on()
         time.sleep(0.001)  # A4988 needs ~1ms to wake before stepping
 
     def sleep(self):
-        self.slp.value = False
+        self.slp.off()
 
     def move(self, distance_mm, direction="extend"):
         STEPS = int(distance_mm / 0.01)
         microMode = 16
         steps = STEPS * microMode
-        self.dir.value = direction == "retract"
+        if direction == "retract":
+            self.dir.on()
+        else:
+            self.dir.off()
 
         self.wake()  # Wake before stepping
 
         for _ in range(steps):
-            self.step.value = True
+            self.step.on()
             time.sleep(0.00002)
-            self.step.value = False
+            self.step.off()
             time.sleep(0.00002)
 
         time.sleep(1)
@@ -120,7 +116,6 @@ class Grave(BaseGrave):
     __slots__ = ("deployed", "ejecting_zombie", "latch_state", "lead_screw", "servo")
 
     def __init__(self):
-        self.servo = ServoDriver()
         self.lead_screw = LeadScrewDriver()
         self.deployed = False
         self.latch_state = False
@@ -139,11 +134,12 @@ class Grave(BaseGrave):
         pass
 
     def deploy_zombie(self):
+        self.servo = ServoDriver()
         self.servo.release_latch()
         self.latch_state = True
-        time.sleep(2)
+        time.sleep(5)
         self.ejecting_zombie = True
-        self.lead_screw.move(480, direction="extend")  # mm
+        self.lead_screw.move(465, direction="deploy")  # mm
         time.sleep(5)
         self.lead_screw.move(120, direction="retract")  # mm
 

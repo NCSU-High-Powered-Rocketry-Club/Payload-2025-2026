@@ -6,7 +6,6 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from zoneinfo import ZoneInfo
 
-from payload.constants import DRILL_ATTEMPTS
 from payload.data_handling.packets.context_data_packet import ContextDataPacket
 from payload.data_handling.packets.grave_data_packet import GraveDataPacket
 from payload.data_handling.packets.zombie_data_packet import ZombieDataPacket
@@ -132,7 +131,7 @@ class Context:
         """
         Deploys Zombie out of the rocket. This method should only be called if code is Grave.
         """
-        self._deploy_thread = self._run_in_thread(self.grave.deploy_zombie, "Deploy Zombie Thread")
+        self.grave.deploy_zombie()
 
     @property
     def is_deploy_complete(self) -> bool:
@@ -185,20 +184,7 @@ class Context:
 
     def start_zombie_drilling(self) -> None:
         """Starts the drilling mechanism. Only called if this is Zombie."""
-        self._drilling_thread = self._run_in_thread(self._drilling_sequence, "Drilling Thread")
-
-    def _drilling_sequence(self):
-        sense_soil = False
-
-        while not sense_soil:
-            for _i in range(DRILL_ATTEMPTS):
-                self.zombie.start_drilling()
-            self.zombie.start_soil_sensor()
-            if (self.zombie_data_packet.nitrogen > 1
-                or self.zombie_data_packet.electrical_conductivity > 1):
-                sense_soil = True
-
-        self.zombie.stop_drilling()
+        self._drilling_thread = self._run_in_thread(self.zombie.start_drilling, "Drilling Thread")
 
     @property
     def is_drilling_complete(self) -> bool:
